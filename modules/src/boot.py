@@ -7,15 +7,37 @@ import uhashlib
 import urequests
 import config
 
+
+import ubinascii
+
+def get_mqtt_client_id():
+    mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
+    return config.MODULE_PREFIX + mac.replace(":", "")[-6:]
 def connect_wifi():
     sta_if = network.WLAN(network.STA_IF)
-    if not sta_if.isconnected():
-        print('Connecting to Wi-Fi...')
-        sta_if.active(True)
-        sta_if.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
-        while not sta_if.isconnected():
-            time.sleep(0.5)
-    print('Network config:', sta_if.ifconfig())
+    try:
+        if not sta_if.isconnected():
+            print('Connecting to Wi-Fi...')
+            sta_if.active(True)
+            sta_if.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
+            while not sta_if.isconnected():
+                time.sleep(0.5)
+                if sta_if.status() == network.STAT_CONNECTING:
+                    continue
+                elif sta_if.status() == network.STAT_WRONG_PASSWORD:
+                    raise Exception("Wi-Fi connection failed: Incorrect password")
+                elif sta_if.status() == network.STAT_NO_AP_FOUND:
+                    raise Exception("Wi-Fi connection failed: Access point not found")
+                elif sta_if.status() == network.STAT_CONNECT_FAIL:
+                    raise Exception("Wi-Fi connection failed: Connection failed")
+                elif sta_if.status() == network.STAT_IDLE:
+                    raise Exception("Wi-Fi connection failed: Interface is idle")
+                else:
+                    raise Exception("Wi-Fi connection failed: Unknown error")
+        print('Network config:', sta_if.ifconfig())
+    except Exception as e:
+        print(f"Error: {e}")
+        # Optionally, you can add logic here to attempt reconnection or take other actions
 
 def generate_module_id():
     # Obtenir l'adresse MAC et générer un ID de module
@@ -45,7 +67,7 @@ def get_boot_counter(client, topic):
     return counter
 
 def connect_mqtt(module_id):
-    client_id = config.get_mqtt_client_id()
+    client_id = get_mqtt_client_id()
     client = MQTTClient(client_id, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
     client.connect()
     print('Connected to MQTT Broker')
@@ -143,7 +165,7 @@ def main():
         print("Fallback completed.")
 
     local_hash = calculate_file_hash('main.py')
-    remote_hash_topic = f"system/main-hash"
+    remote_hash_topic = f"system/hash/main.py"
     remote_hash = get_remote_hash(client, remote_hash_topic)
 
     if local_hash != remote_hash:

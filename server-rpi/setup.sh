@@ -44,7 +44,7 @@ apk add python3 nodejs py3-pip
 echo "Installation des composants pip..."
 python3 -v venv /root/venv
 source /root/venv/bin/activate
-pip install esptool adafruit-ampy
+pip install esptool adafruit-ampy paho-mqtt
 
 # Sauvegarder le fichier de configuration Mosquitto
 echo "Sauvegarde du fichier de configuration Mosquitto..."
