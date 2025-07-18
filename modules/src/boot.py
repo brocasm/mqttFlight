@@ -7,8 +7,9 @@ import uhashlib
 import urequests
 import config
 import os
+from include import log
 
-BOOT_VERSION = "v0.2"
+BOOT_VERSION = "v0.3"
 
 def get_mqtt_client_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
@@ -18,7 +19,7 @@ def connect_wifi():
     sta_if = network.WLAN(network.STA_IF)
     try:
         if not sta_if.isconnected():
-            print('Connecting to Wi-Fi...')
+            log('Connecting to Wi-Fi...')
             sta_if.active(True)
             sta_if.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
             while not sta_if.isconnected():
@@ -35,9 +36,9 @@ def connect_wifi():
                     raise Exception("Wi-Fi connection failed: Interface is idle")
                 else:
                     raise Exception("Wi-Fi connection failed: Unknown error")
-        print('Network config:', sta_if.ifconfig())
+        log('Network config:', sta_if.ifconfig())
     except Exception as e:
-        print(f"Error: {e}")
+        log(f"Error: {e}")
 
 def generate_module_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
@@ -68,14 +69,14 @@ def connect_mqtt(module_id):
     client_id = get_mqtt_client_id()
     client = MQTTClient(client_id, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
     client.connect()
-    print('Connected to MQTT Broker')
+    log('Connected to MQTT Broker')
 
     topic = "cockpit/" + module_id + "/countboot"
     boot_counter = get_boot_counter(client, topic)
     boot_counter += 1
     client.publish(topic, str(boot_counter), retain=True)
-    client.publish("cockpit/" + module_id + "/version/boot",BOOT_VERSION)
-    print('Published last boot message to topic:', topic)
+    client.publish("cockpit/" + module_id + "/version/boot", BOOT_VERSION)
+    log('Published last boot message to topic:', topic)
 
     return client
 
@@ -147,9 +148,9 @@ def check_fallback(client, topic):
 
 def replace_boot_file():
     if 'boot-new.py' in os.listdir():
-        print("Replacing boot.py with boot-new.py...")
+        log("Replacing boot.py with boot-new.py...")
         os.rename('boot-new.py', 'boot.py')
-        print("***** boot.py updated successfully. ********")
+        log("***** boot.py updated successfully. ********")
         machine.reset()
 
 def main():
@@ -161,12 +162,12 @@ def main():
 
     fallback_topic = f"cockpit/{module_id}/fallback"
     if check_fallback(client, fallback_topic):
-        print("Fallback triggered. Restoring main.py from backup...")
+        log("Fallback triggered. Restoring main.py from backup...")
         restore_file('main.py')
         client.publish(fallback_topic, 'done', retain=True)
-        print("Fallback completed.")
+        log("Fallback completed.")
 
-    files_to_check = ['main.py', 'boot.py', 'config.py']
+    files_to_check = ['main.py', 'boot.py', 'config.py', 'include.py']
     for filepath in files_to_check:
         local_hash = calculate_file_hash(filepath)
         local_hash_hex = ubinascii.hexlify(local_hash).decode()
@@ -175,21 +176,21 @@ def main():
         remote_hash_hex = remote_hash.decode() if remote_hash else None
 
         if local_hash_hex != remote_hash_hex:
-            print(f"Hash mismatch for {filepath}. Downloading new {filepath}...")
-            print(f"{local_hash_hex} != {remote_hash_hex}")
+            log(f"Hash mismatch for {filepath}. Downloading new {filepath}...")
+            log(f"{local_hash_hex} != {remote_hash_hex}")
             backup_file(filepath)
             file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
             new_content = download_file(file_url)
             update_file(filepath, new_content)
-            print(f"{filepath} updated successfully.")
+            log(f"{filepath} updated successfully.")
         else:
-            print(f"Hash for {filepath} is identical, no update needed.")
+            log(f"Hash for {filepath} is identical, no update needed.")
 
     try:
-        print("Launching main.py")
+        log("Launching main.py")
         import main
     except Exception as e:
-        print('Failed to import main.py:', e)
+        log('Failed to import main.py:', e)
 
 if __name__ == "__main__":
     main()
