@@ -69,6 +69,9 @@ chmod 644 /etc/mosquitto/pwfile
 chown mosquitto:mosquitto /etc/mosquitto/acl.conf
 chmod 644 /etc/mosquitto/acl.conf
 
+
+chmod +x modules/flash.sh modules/transfer.sh
+
 # Activer et redémarrer Mosquitto
 rc-update add mosquitto
 service mosquitto restart
