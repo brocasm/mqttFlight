@@ -6,13 +6,14 @@ from umqtt.simple import MQTTClient
 import uhashlib
 import urequests
 import config
+import os
 
-
-import ubinascii
+BOOT_VERSION = "v0.2"
 
 def get_mqtt_client_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
     return config.MODULE_PREFIX + mac.replace(":", "")[-6:]
+
 def connect_wifi():
     sta_if = network.WLAN(network.STA_IF)
     try:
@@ -37,16 +38,13 @@ def connect_wifi():
         print('Network config:', sta_if.ifconfig())
     except Exception as e:
         print(f"Error: {e}")
-        # Optionally, you can add logic here to attempt reconnection or take other actions
 
 def generate_module_id():
-    # Obtenir l'adresse MAC et générer un ID de module
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
-    module_id = "modules-" + mac.replace(":", "")[-6:]  # Prendre les 6 derniers caractères de l'adresse MAC
+    module_id = "modules-" + mac.replace(":", "")[-6:]
     return module_id
 
 def get_boot_counter(client, topic):
-    # Fonction pour récupérer le compteur actuel depuis le topic MQTT
     def on_message(topic, msg):
         nonlocal counter
         try:
@@ -60,7 +58,7 @@ def get_boot_counter(client, topic):
 
     start_time = time.time()
     while time.time() - start_time < 5:
-        client.check_msg()  # Vérifier les messages MQTT
+        client.check_msg()
         if counter != 0:
             break
 
@@ -73,15 +71,10 @@ def connect_mqtt(module_id):
     print('Connected to MQTT Broker')
 
     topic = "cockpit/" + module_id + "/countboot"
-
-    # Récupérer le compteur actuel
     boot_counter = get_boot_counter(client, topic)
-
-    # Incrémenter le compteur
     boot_counter += 1
-
-    # Publier le nouveau compteur
     client.publish(topic, str(boot_counter), retain=True)
+    client.publish("cockpit/" + module_id + "/version/boot",BOOT_VERSION)
     print('Published last boot message to topic:', topic)
 
     return client
@@ -119,20 +112,20 @@ def download_file(url):
     else:
         raise Exception(f"Failed to download file: {response.status_code}")
 
-def update_main_file(content):
-    with open('main.py', 'wb') as f:
+def update_file(filepath, content):
+    with open(filepath, 'wb') as f:
         f.write(content)
 
-def backup_main_file():
-    with open('main.py', 'rb') as f:
+def backup_file(filepath):
+    with open(filepath, 'rb') as f:
         content = f.read()
-    with open('main_backup.py', 'wb') as f:
+    with open(filepath + '_backup', 'wb') as f:
         f.write(content)
 
-def restore_main_file():
-    with open('main_backup.py', 'rb') as f:
+def restore_file(filepath):
+    with open(filepath + '_backup', 'rb') as f:
         content = f.read()
-    with open('main.py', 'wb') as f:
+    with open(filepath, 'wb') as f:
         f.write(content)
 
 def check_fallback(client, topic):
@@ -152,7 +145,16 @@ def check_fallback(client, topic):
 
     return fallback
 
+def replace_boot_file():
+    if 'boot-new.py' in os.listdir():
+        print("Replacing boot.py with boot-new.py...")
+        os.rename('boot-new.py', 'boot.py')
+        print("***** boot.py updated successfully. ********")
+        machine.reset()
+
 def main():
+    replace_boot_file()
+
     connect_wifi()
     module_id = generate_module_id()
     client = connect_mqtt(module_id)
@@ -160,24 +162,31 @@ def main():
     fallback_topic = f"cockpit/{module_id}/fallback"
     if check_fallback(client, fallback_topic):
         print("Fallback triggered. Restoring main.py from backup...")
-        restore_main_file()
+        restore_file('main.py')
         client.publish(fallback_topic, 'done', retain=True)
         print("Fallback completed.")
 
-    local_hash = calculate_file_hash('main.py')
-    remote_hash_topic = f"system/hash/main.py"
-    remote_hash = get_remote_hash(client, remote_hash_topic)
+    files_to_check = ['main.py', 'boot.py', 'config.py']
+    for filepath in files_to_check:
+        local_hash = calculate_file_hash(filepath)
+        local_hash_hex = ubinascii.hexlify(local_hash).decode()
+        remote_hash_topic = f"system/hash/{filepath}"
+        remote_hash = get_remote_hash(client, remote_hash_topic)
+        remote_hash_hex = remote_hash.decode() if remote_hash else None
 
-    if local_hash != remote_hash:
-        print("Hash mismatch. Downloading new main.py...")
-        backup_main_file()
-        main_file_url = f"http://{config.SERVER_ADDRESS}:8000/main.py"
-        new_main_content = download_file(main_file_url)
-        update_main_file(new_main_content)
-        print("main.py updated successfully.")
+        if local_hash_hex != remote_hash_hex:
+            print(f"Hash mismatch for {filepath}. Downloading new {filepath}...")
+            print(f"{local_hash_hex} != {remote_hash_hex}")
+            backup_file(filepath)
+            file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
+            new_content = download_file(file_url)
+            update_file(filepath, new_content)
+            print(f"{filepath} updated successfully.")
+        else:
+            print(f"Hash for {filepath} is identical, no update needed.")
 
-    # Lancer le script main.py
     try:
+        print("Launching main.py")
         import main
     except Exception as e:
         print('Failed to import main.py:', e)
