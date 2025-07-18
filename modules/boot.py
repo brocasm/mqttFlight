@@ -21,28 +21,35 @@ def generate_module_id():
     module_id = "modules-" + mac.replace(":", "")[-6:]  # Prendre les 6 derniers caractères de l'adresse MAC
     return module_id
 
+def get_boot_counter(client, topic):
+    # Fonction pour récupérer le compteur actuel depuis le topic MQTT
+    def on_message(topic, msg):
+        nonlocal counter
+        counter = int(msg.decode())
+
+    counter = 0
+    client.set_callback(on_message)
+    client.subscribe(topic)
+    client.check_msg()  # Vérifier les messages MQTT
+    client.unsubscribe(topic)
+    return counter
+
 def connect_mqtt(module_id):
     client_id = config.get_mqtt_client_id()
     client = MQTTClient(client_id, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
     client.connect()
     print('Connected to MQTT Broker')
 
-    # Envoyer un message MQTT pour indiquer le dernier démarrage
-    timestamp = time.time()
-    # Convertir le timestamp en une date et heure lisibles si possible, sinon utiliser le timestamp
-    try:
-        import utime
-        local_time = utime.localtime(timestamp)
-        date_time = "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}".format(
-            local_time[0], local_time[1], local_time[2],
-            local_time[3], local_time[4], local_time[5]
-        )
-        message = date_time
-    except:
-        message = str(timestamp)
-
     topic = "cockpit/" + module_id + "/lastboot"
-    client.publish(topic, message)
+
+    # Récupérer le compteur actuel
+    boot_counter = get_boot_counter(client, topic)
+
+    # Incrémenter le compteur
+    boot_counter += 1
+
+    # Publier le nouveau compteur
+    client.publish(topic, str(boot_counter))
     print('Published last boot message to topic:', topic)
 
     return client
