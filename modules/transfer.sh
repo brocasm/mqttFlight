@@ -4,7 +4,7 @@
 source /root/venv/bin/activate
 
 # Liste des fichiers à transférer
-files="boot.py config.py main.py"
+files="src/boot.py src/config.py src/main.py"
 
 # Transfère chaque fichier sur l'ESP8266
 for file in $files; do
