@@ -2,7 +2,7 @@
 # Script pour configurer un point d'accès Wi-Fi, installer Python 3, Node.js, et un broker MQTT sur Alpine Linux
 
 # Charger les variables sensibles à partir du fichier de configuration
-source /path/to/setup-init.conf
+source setup-init.conf
 
 # Mettre à jour les paquets
 echo "Mise à jour des paquets..."
