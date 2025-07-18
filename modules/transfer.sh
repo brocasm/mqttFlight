@@ -3,30 +3,23 @@
 # Active l'environnement virtuel
 source /root/venv/bin/activate
 
-echo "Transfert de boot.py sur l'ESP8266..."
-ampy --port /dev/ttyUSB0 put boot.py
+# Liste des fichiers à transférer
+files="boot.py config.py main.py"
 
-# Vérifie si le transfert a réussi
-if [ $? -eq 0 ]; then
-    echo "Transfert de boot.py terminé avec succès."
-else
-    echo "Erreur lors du transfert de boot.py."
-    deactivate
-    exit 1
-fi
+# Transfère chaque fichier sur l'ESP8266
+for file in $files; do
+    echo "Transfert de $file sur l'ESP8266..."
+    ampy --port /dev/ttyUSB0 put $file
 
-# Transfère le fichier main.py sur l'ESP8266
-echo "Transfert de main.py sur l'ESP8266..."
-ampy --port /dev/ttyUSB0 put main.py
-
-# Vérifie si le transfert a réussi
-if [ $? -eq 0 ]; then
-    echo "Transfert de main.py terminé avec succès."
-else
-    echo "Erreur lors du transfert de main.py."
-    deactivate
-    exit 1
-fi
+    # Vérifie si le transfert a réussi
+    if [ $? -eq 0 ]; then
+        echo "Transfert de $file terminé avec succès."
+    else
+        echo "Erreur lors du transfert de $file."
+        deactivate
+        exit 1
+    fi
+done
 
 # Désactive l'environnement virtuel
 deactivate
