@@ -1,7 +1,7 @@
 import os
 import hashlib
 from config import MQTT_BROKER, MQTT_PORT, MQTT_USER, MQTT_PASSWORD
-
+import time
 import paho.mqtt.client as mqtt
 
 def calculate_sha256(file_path):
@@ -15,7 +15,7 @@ def calculate_sha256(file_path):
 
 def publish_sha256_of_files(directory):
     """Publish the SHA-256 hash of each file in the given directory to an MQTT topic."""
-    client = mqtt.Client("rpi-master")
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
     client.connect(MQTT_BROKER, MQTT_PORT)
     for root, _, files in os.walk(directory):
@@ -23,8 +23,9 @@ def publish_sha256_of_files(directory):
             file_path = os.path.join(root, file)
             file_hash = calculate_sha256(file_path)
             topic = f"system/hash/{os.path.basename(file_path)}"
-            client.publish(topic, file_hash)
+            client.publish(topic, file_hash, retain=True)
             print(f"Published hash for {file_path}: {file_hash}")
+            time.sleep(1)
     client.disconnect()
 
 # Specify the directory you want to scan
