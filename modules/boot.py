@@ -33,7 +33,13 @@ def get_boot_counter(client, topic):
     counter = 0
     client.set_callback(on_message)
     client.subscribe(topic)
-    client.check_msg()  # Vérifier les messages MQTT    
+
+    start_time = time.time()
+    while time.time() - start_time < 5:
+        client.check_msg()  # Vérifier les messages MQTT
+        if counter != 0:
+            break
+
     return counter
 
 def connect_mqtt(module_id):
@@ -42,7 +48,7 @@ def connect_mqtt(module_id):
     client.connect()
     print('Connected to MQTT Broker')
 
-    topic = "cockpit/" + module_id + "/lastboot"
+    topic = "cockpit/" + module_id + "/countboot"
 
     # Récupérer le compteur actuel
     boot_counter = get_boot_counter(client, topic)
@@ -51,7 +57,7 @@ def connect_mqtt(module_id):
     boot_counter += 1
 
     # Publier le nouveau compteur
-    client.publish(topic, str(boot_counter))
+    client.publish(topic, str(boot_counter), retain=True)
     print('Published last boot message to topic:', topic)
 
     return client
