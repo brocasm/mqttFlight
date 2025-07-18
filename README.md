@@ -83,12 +83,13 @@ graph LR
 
 ```bash
 # On Raspberry Pi
-git clone https://github.com/your-repo/home-cockpit.git
-cd home-cockpit
-./setup-alpine.sh  # Configures lightweight environment
+git clone https://github.com/brocasm/mqttFlight.git
+cd mqttFlight
+chmod +x ./server-rpi/setup-alpine.sh 
+./server-rpi/setup-alpine.sh  # Configures lightweight environment
 
-# For ESP8266 modules
-flash firmware/esp8266-firmware.bin
+# For ESP32/ESP8266 modules
+COMING SOON 
 ```
 
 ## Contribute to the Project!  
