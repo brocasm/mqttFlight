@@ -17,3 +17,6 @@ MQTT_PASSWORD = "monmotdepasse"
 
 def get_mqtt_client_id():
     return "esp-module-" + get_mac_suffix()
+
+
+SERVER_ADDRESS="192.168.42.1"
