@@ -6,7 +6,7 @@
 [![Built for Linux](https://img.shields.io/badge/Primary%20Target-Linux-1793D1.svg)](https://www.protondb.com)  
 [![Windows Compatible](https://img.shields.io/badge/Windows-Compatible-0078D6.svg)](https://windows.com)  
 **🚧 WARNING: PROJECT IN ACTIVE DEVELOPMENT - NOT FLIGHT-READY YET 🚧**  
-*Born: July 2024 - Currently in early alpha stage*
+*Born: July 2025 - Currently in early alpha stage*
 
 ## The Genesis: Why This Project Exists  
 
