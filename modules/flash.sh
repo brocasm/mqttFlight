@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Vérifie si le fichier binaire existe
 if [ ! -f "ESP8266/ESP8266.bin" ]; then

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Active l'environnement virtuel
 source /root/venv/bin/activate
