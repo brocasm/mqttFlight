@@ -1,55 +1,107 @@
-# ⚠️ Work In Progress (WIP) ⚠️
-
-This project is currently a work in progress and is not yet available in an alpha version. Please stay tuned for updates as we continue to develop and improve the system.
 
 
-# Home Cockpit DIY
+# DIY Home Cockpit for Flight Simulators 🛩️
 
-A modular Home Cockpit system for flight simulators (like Microsoft Flight Simulator) using a distributed architecture based on ESP32 or D1 Mini microcontrollers, connected to a central Raspberry Pi server via Wi-Fi.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)  
+[![Built for Linux](https://img.shields.io/badge/Primary%20Target-Linux-1793D1.svg)](https://www.protondb.com)  
+[![Windows Compatible](https://img.shields.io/badge/Windows-Compatible-0078D6.svg)](https://windows.com)  
+**🚧 WARNING: PROJECT IN ACTIVE DEVELOPMENT - NOT FLIGHT-READY YET 🚧**  
+*Born: July 2024 - Currently in early alpha stage*
 
-## Features
+## The Genesis: Why This Project Exists  
 
-- **Modular Design**: Each module corresponds to a physical piece of equipment (group of buttons, gauges, LEDs, etc.).
-- **Wireless Communication**: Uses Wi-Fi for communication between modules and the server.
-- **MQTT Protocol**: Efficient and lightweight communication protocol between modules and server.
-- **Central Server**: Raspberry Pi running an MQTT broker, a Node.js server, and a web interface in Svelte.
-- **Easy Configuration**: Configurations stored in readable, versionable, and portable JSON files.
+As a Linux gamer running Microsoft Flight Simulator through Proton, I faced constant frustrations:  
+- **Driver hell**: Proprietary drivers and DLL dependencies breaking under Wine/Proton  
+- **Cable chaos**: USB spaghetti limiting cockpit flexibility  
+- **Windows lock-in**: Vendor tools requiring Windows for configuration  
+- **Addon incompatibility**: Tricky hardware solutions failing on Linux  
 
-## Components
+**This project solves these problems by:**  
+1. Replacing wired connections with Wi-Fi communication  
+2. Eliminating OS-specific drivers through open standards  
+3. Creating a modular system that works equally well on **Linux AND Windows**  
+4. Ensuring compatibility with emerging network-based flight sim interfaces  
 
-1. **Raspberry Pi Server**:
-   - Hosts an MQTT broker.
-   - Runs a Node.js server that converts data from FSUI-PC7 via WebSocket and relays information via MQTT.
-   - Provides a web interface built with Svelte.
-   - Stores configurations in JSON files.
+## Technical Highlights ⚡  
 
-2. **ESP32/D1 Mini Modules**:
-   - Each module corresponds to a physical piece of equipment.
-   - Connects to the Wi-Fi network.
-   - Downloads its script (`main.py`) on startup via HTTP or MQTT.
-   - Communicates with the server via MQTT.
+```mermaid  
+graph LR  
+    A[Flight Simulator] -->|FSUIPC7/WebSocket| B(Node.js Server)  
+    A -->|MobiFlight API| B  
+    A -->|SimConnect| B  
+    B -->|MQTT| C[Raspberry Pi Broker]  
+    C -->|MQTT| D[ESP8266/ESP32 Panels]  
+    D -->|MQTT| C  
+    C -->|HTTP| E[Svelte Web UI]  
+    D --> F[Physical Components]  
+    F --> G[Buttons]  
+    F --> H[Switches]  
+    F --> I[Servos]  
+    F --> J[LEDs]  
+```  
 
-## Installation
+### Hardware Requirements  
+- **Central Hub**:  
+  - Raspberry Pi 3B+ or newer  
+  - Other compatible SBCs: Orange Pi, Banana Pi, etc.  
+- **Control Modules**:  
+  - ESP8266 (NodeMCU, Wemos D1 Mini)  
+  - ESP32 (recommended for advanced features)  
+- **Network**: Dedicated 2.4GHz Wi-Fi router recommended  
 
-1. Clone this repository.
-2. Follow the instructions in the [Installation Guide](docs/installation.md) to set up the Raspberry Pi server and configure the ESP32/D1 Mini modules.
-3. Customize the configurations as needed for your specific setup.
+## Roadmap 🗺️  
 
-## Usage
+| Timeline     | Features                          |
+|--------------|-----------------------------------|
+| Q3 2025      | ✅ Core architecture              |
+|              | ✅ Basic button/switch support    |
+| Q4 2025      | 🚧 Analog instrument support      |
+|              | 🚧 Web UI framework               |
+| Q1 2026      | 🚧 SimConnect bridge module       |
+|              | 🚧 Failure simulation engine      |
+| Q2 2026      | 🔜 OLED display modules           |
+|              | 🔜 Force feedback support         |
+|              | 🔜 VR integration layer           |
 
-1. Power on the Raspberry Pi server and ensure it is connected to the network.
-2. Power on the ESP32/D1 Mini modules. They will automatically connect to the Wi-Fi network and download their configurations.
-3. Access the web interface to monitor and control the Home Cockpit system.
+## Key Features  
 
-## Configuration
+- **Universal Hardware Support**:  
+  - ESP8266 for basic I/O (buttons, LEDs)  
+  - ESP32 for advanced components (displays, encoders)  
+  - Automatic detection of connected modules  
 
-- Configuration files are stored in JSON format for easy editing and version control.
-- Each module's configuration can be customized to match the specific hardware setup.
+- **Cross-Simulator Compatibility**:  
+  - Works with MSFS, X-Plane, DCS World  
+  - Adapter layer for FSUIPC7, MobiFlight, SimConnect  
 
-## Contributing
+- **Optimized Architecture**:  
+  - Centralized processing on Raspberry Pi  
+  - Distributed I/O handling on ESP modules  
+  - Lightweight Alpine Linux base system  
 
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+## Getting Started  
 
-## License
+```bash
+# On Raspberry Pi
+git clone https://github.com/your-repo/home-cockpit.git
+cd home-cockpit
+./setup-alpine.sh  # Configures lightweight environment
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+# For ESP8266 modules
+flash firmware/esp8266-firmware.bin
+```
+
+## Contribute to the Project!  
+
+We're looking for:  
+- Hardware testers (ESP8266/ESP32 platforms)  
+- SimConnect experts  
+- UI/UX designers for the web interface  
+
+**License**: MIT - See [LICENSE.md](LICENSE.md) for details.  
+
+---
+
+**Build your dream cockpit - wireless and platform-agnostic!** ✈️💻🔧  
+
+> **Note**: Project currently in active development - suitable for tinkerers and early adopters. Production-ready version expected Q2 2026.
