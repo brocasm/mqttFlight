@@ -25,13 +25,15 @@ def get_boot_counter(client, topic):
     # Fonction pour récupérer le compteur actuel depuis le topic MQTT
     def on_message(topic, msg):
         nonlocal counter
-        counter = int(msg.decode())
+        try:
+            counter = int(msg.decode())
+        except ValueError:
+            counter = 0
 
     counter = 0
     client.set_callback(on_message)
     client.subscribe(topic)
-    client.check_msg()  # Vérifier les messages MQTT
-    client.unsubscribe(topic)
+    client.check_msg()  # Vérifier les messages MQTT    
     return counter
 
 def connect_mqtt(module_id):
