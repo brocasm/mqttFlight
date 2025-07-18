@@ -4,20 +4,17 @@ import time
 # Configure la broche D4 (GPIO2) comme sortie
 led = machine.Pin(2, machine.Pin.OUT)
 
-while True:
-    sequence = "--....--."
-    # Boucle pour transformer la séquence
-    for char in sequence:
-        if char == '.':
-            # Attendre 0.5 secondes
-            time.sleep(0.5)
-            print(".")
-        elif char == '-':
-            # Attendre 1 seconde
-            time.sleep(1)
-            print("-")
-        else:
-            print("Caractère non valide dans la séquence")
+def blink_morse_code():
+    morse_code = ".--....--."
+    for symbol in morse_code:
+        if symbol == ".":
+            led.on()  # Allume la LED
+            time.sleep(0.5)  # Attend 0.5 seconde
+        elif symbol == "-":
+            led.on()  # Allume la LED
+            time.sleep(1)  # Attend 1 seconde
+        led.off()  # Éteint la LED
+        time.sleep(0.5)  # Attend 0.5 seconde entre chaque symbole
 
-    # Indiquer la fin de la séquence
-    print("Fin de la séquence")
+while True:
+    blink_morse_code()
