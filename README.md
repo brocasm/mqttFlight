@@ -42,12 +42,16 @@ graph LR
 
 ### Hardware Requirements  
 - **Central Hub**:  
-  - Raspberry Pi 3B+ or newer  
-  - Other compatible SBCs: Orange Pi, Banana Pi, etc.  
+  - Raspberry Pi 3B+ or newer (with Ethernet or dual WiFi via USB dongle)  
+  - Configured as WiFi Access Point for modules  
+  - Alternative: Dedicated WiFi router (optional)  
 - **Control Modules**:  
   - ESP8266 (NodeMCU, Wemos D1 Mini)  
   - ESP32 (recommended for advanced features)  
-- **Network**: Dedicated 2.4GHz Wi-Fi router recommended  
+- **Network Options**:  
+  - **Recommended**: RPi as AP + Ethernet to gaming PC  
+  - **Alternative 1**: RPi with dual WiFi (built-in + USB dongle)  
+  - **Alternative 2**: Dedicated WiFi router for all connections  
 
 ## Roadmap 🗺️  
 
