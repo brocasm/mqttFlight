@@ -9,6 +9,7 @@ import config
 import os
 from include import log
 
+
 BOOT_VERSION = "v0.3"
 
 def get_mqtt_client_id():
@@ -106,22 +107,36 @@ def get_remote_hash(client, topic):
 
     return remote_hash
 
-def download_file(url):
-    response = urequests.get(url)
-    if response.status_code == 200:
-        return response.content
-    else:
-        raise Exception(f"Failed to download file: {response.status_code}")
+def download_file(url, chunk_size=1024):
+    try:
+        response = urequests.get(url)
+        if response.status_code == 200:
+            # Ouvrir un fichier local pour écrire les données téléchargées
+            with open('downloaded_file', 'wb') as f:
+                while True:
+                    chunk = response.raw.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+            return 'downloaded_file'
+        else:
+            raise Exception(f"Failed to download file: {response.status_code}")
+    except Exception as e:
+        raise Exception(f"An error occurred: {str(e)}")
 
 def update_file(filepath, content):
     with open(filepath, 'wb') as f:
         f.write(content)
 
 def backup_file(filepath):
-    with open(filepath, 'rb') as f:
-        content = f.read()
-    with open(filepath + '_backup', 'wb') as f:
-        f.write(content)
+    with open(filepath, 'rb') as f_src:
+        with open(filepath + '_backup', 'wb') as f_dst:
+            while True:
+                buffer = f_src.read(512)  # Lire en blocs de 512 octets
+                if not buffer:
+                    break
+                f_dst.write(buffer)
+    
 
 def restore_file(filepath):
     with open(filepath + '_backup', 'rb') as f:
