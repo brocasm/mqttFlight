@@ -1,0 +1,23 @@
+#!/sbin/openrc-run
+
+command=/usr/bin/python3
+command_args="-m http.server 8000 --directory /root/mqttFlight/modules/src"
+pidfile=/run/mqttFlight.pid
+name="mqttFlight"
+description="Serveur HTTP pour le projet mqttFlight"
+
+depend() {
+    need net
+}
+
+start() {
+    ebegin "Démarrage de $name"
+    start-stop-daemon --start --make-pidfile --pidfile $pidfile --background --exec $command -- $command_args
+    eend $?
+}
+
+stop() {
+    ebegin "Arrêt de $name"
+    start-stop-daemon --stop --pidfile $pidfile
+    eend $?
+}

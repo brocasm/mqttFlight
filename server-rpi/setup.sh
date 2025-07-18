@@ -25,7 +25,6 @@ cat configs/interfaces > /etc/network/interfaces
 echo "Configuration de hostapd..."
 cat configs/hostapd.conf | sed "s/^ssid=.*/ssid=$SSID/" | sed "s/^wpa_passphrase=.*/wpa_passphrase=$WIFI_PASSWORD/" > /etc/hostapd/hostapd.conf
 
-
 # Configurer dnsmasq pour le DHCP
 echo "Configuration de dnsmasq..."
 cat configs/dnsmasq.conf > /etc/dnsmasq.conf
@@ -69,8 +68,19 @@ chmod 644 /etc/mosquitto/pwfile
 chown mosquitto:mosquitto /etc/mosquitto/acl.conf
 chmod 644 /etc/mosquitto/acl.conf
 
-
 chmod +x modules/flash.sh modules/transfer.sh
+
+# Copier le script init.d en utilisant cat
+cat configs/init.d/mqttFlight-modulesrc > /etc/init.d/mqttFlight-modulesrc
+
+# Rendre le script exécutable
+chmod +x /etc/init.d/mqttFlight-modulesrc
+
+# Ajouter le script au niveau d'exécution par défaut
+rc-update add mqttFlight-modulesrc
+
+# Redémarrer le service
+service mqttFlight-modulesrc restart
 
 # Activer et redémarrer Mosquitto
 rc-update add mosquitto
@@ -86,4 +96,5 @@ echo "5. L'interface eth0 a été configurée pour utiliser DHCP."
 echo "6. Fichier de configuration Mosquitto sauvegardé."
 echo "7. Utilisateur MQTT '$MQTT_USER' créé avec un mot de passe par défaut."
 echo "8. Fichier ACL configuré pour les utilisateurs et topics spécifiques."
+echo "9. Script init.d 'mqttFlight-modulesrc' copié, rendu exécutable, ajouté au niveau d'exécution par défaut et redémarré."
 echo "Configuration terminée."
