@@ -3,6 +3,18 @@
 # Active l'environnement virtuel
 source /root/venv/bin/activate
 
+echo "Transfert de boot.py sur l'ESP8266..."
+ampy --port /dev/ttyUSB0 put boot.py
+
+# Vérifie si le transfert a réussi
+if [ $? -eq 0 ]; then
+    echo "Transfert de boot.py terminé avec succès."
+else
+    echo "Erreur lors du transfert de boot.py."
+    deactivate
+    exit 1
+fi
+
 # Transfère le fichier main.py sur l'ESP8266
 echo "Transfert de main.py sur l'ESP8266..."
 ampy --port /dev/ttyUSB0 put main.py
