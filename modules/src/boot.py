@@ -7,7 +7,7 @@ import uhashlib
 import urequests
 import config
 import os
-from include import log
+from include import log, generate_module_id
 
 BOOT_VERSION = "v0.12"
 LOG_SCRIPT_NAME = "boot.py"
@@ -40,11 +40,6 @@ def connect_wifi():
         print('Network config:', sta_if.ifconfig())
     except Exception as e:
         print(f"Error: {e}")
-
-def generate_module_id():
-    mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
-    module_id = "modules-" + mac.replace(":", "")[-6:]
-    return module_id
 
 def get_boot_counter(client, topic):
     def on_message(topic, msg):

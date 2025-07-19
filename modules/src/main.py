@@ -3,16 +3,20 @@ import time
 from umqtt.simple import MQTTClient
 import config
 
-from include import log
+from include import log, generate_module_id
 LOG_SCRIPT_NAME = "main.py"
+
+module_id = generate_module_id()
 
 # Configure la broche D4 (GPIO2) comme sortie
 led = machine.Pin(2, machine.Pin.OUT)
 
-log(level="ERROR", message="Is running...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+
 
 client = MQTTClient(config.MODULE_PREFIX + module_id, config.MQTT_BROKER, user=config.MQTT_USER, password=config.MQTT_PASSWORD)
 client.connect()
+
+log(level="ERROR", message="Is running...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
 
 def on_message(topic, msg):
     if topic == b'cockpit/' + module_id + b'/reboot':
