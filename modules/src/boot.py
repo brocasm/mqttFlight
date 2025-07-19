@@ -9,7 +9,7 @@ import config
 import os
 from include import log
 
-BOOT_VERSION = "v0.7"
+BOOT_VERSION = "v0.8"
 LOG_SCRIPT_NAME = "boot.py"
 
 def get_mqtt_client_id():
