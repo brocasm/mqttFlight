@@ -10,6 +10,7 @@ class MQTTHandler:
         self.module_id = generate_module_id()
         self.client = None
         self.led = machine.Pin(2, machine.Pin.OUT)  # Adjust the pin number as needed
+        self.LOG_SCRIPT_NAME = "core-mqtt.py"
 
     async def blink_led(self):
         for _ in range(3):
@@ -24,7 +25,7 @@ class MQTTHandler:
 
         
     def log(self, level, message):
-        log(client=self.client, level=level, message=message, module_id=self.module_id)
+        log(client=self.client, level=level, message=message, module_id=self.module_id, filepath=self.LOG_SCRIPT_NAME)
 
     async def subscribe(self, topics):                      
         for topic in topics:

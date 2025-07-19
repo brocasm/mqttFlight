@@ -43,6 +43,7 @@ async def main():
     await connect_wifi()
 
     mqtt_handler = CustomMQTTHandler()
+    mqtt_handler.LOG_SCRIPT_NAME = LOG_SCRIPT_NAME
     await mqtt_handler.connect_mqtt()
 
     topics = ['cockpit/default/altitude', f'cockpit/{module_id}/reboot']
