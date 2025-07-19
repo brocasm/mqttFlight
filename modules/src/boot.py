@@ -9,7 +9,6 @@ import config
 import os
 from include import log
 
-
 BOOT_VERSION = "v0.4"
 
 def get_mqtt_client_id():
@@ -20,7 +19,7 @@ def connect_wifi():
     sta_if = network.WLAN(network.STA_IF)
     try:
         if not sta_if.isconnected():
-            log('Connecting to Wi-Fi...')
+            print('Connecting to Wi-Fi...')
             sta_if.active(True)
             sta_if.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
             while not sta_if.isconnected():
@@ -37,9 +36,9 @@ def connect_wifi():
                     raise Exception("Wi-Fi connection failed: Interface is idle")
                 else:
                     raise Exception("Wi-Fi connection failed: Unknown error")
-        log('Network config:', sta_if.ifconfig())
+        print('Network config:', sta_if.ifconfig())
     except Exception as e:
-        log(f"Error: {e}")
+        print(f"Error: {e}")
 
 def generate_module_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
@@ -70,14 +69,14 @@ def connect_mqtt(module_id):
     client_id = get_mqtt_client_id()
     client = MQTTClient(client_id, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
     client.connect()
-    log('Connected to MQTT Broker')
+    log(client, module_id, 'Connected to MQTT Broker')
 
     topic = "cockpit/" + module_id + "/countboot"
     boot_counter = get_boot_counter(client, topic)
     boot_counter += 1
     client.publish(topic, str(boot_counter), retain=True)
     client.publish("cockpit/" + module_id + "/version/boot", BOOT_VERSION)
-    log('Published last boot message to topic:', topic)
+    log(client, module_id, 'Published last boot message to topic:', topic)
 
     return client
 
@@ -107,17 +106,18 @@ def get_remote_hash(client, topic):
 
     return remote_hash
 
-def download_file(url,filename, chunk_size=1024):
+def download_file(url,filepath, chunk_size=1024):
     try:
         response = urequests.get(url)
-        if response.status_code == 200:                    
-            with open(filename, 'wb') as f:
+        if response.status_code == 200:
+            # Ouvrir un fichier local pour écrire les données téléchargées
+            with open(filepath, 'wb') as f:
                 while True:
                     chunk = response.raw.read(chunk_size)
                     if not chunk:
                         break
                     f.write(chunk)
-            return filename
+            return filepath
         else:
             raise Exception(f"Failed to download file: {response.status_code}")
     except Exception as e:
@@ -135,7 +135,6 @@ def backup_file(filepath):
                 if not buffer:
                     break
                 f_dst.write(buffer)
-    
 
 def restore_file(filepath):
     with open(filepath + '_backup', 'rb') as f:
@@ -162,10 +161,22 @@ def check_fallback(client, topic):
 
 def replace_boot_file():
     if 'boot-new.py' in os.listdir():
-        log("Replacing boot.py with boot-new.py...")
+        print("Replacing boot.py with boot-new.py...")
         os.rename('boot-new.py', 'boot.py')
-        log("***** boot.py updated successfully. ********")
+        print("***** boot.py updated successfully. ********")
         machine.reset()
+
+def publish_log(client, topic, message):
+    try:
+        client.publish(topic, message)
+    except Exception as e:
+        print(f"Failed to publish log: {e}")
+
+def log(client, module_id, *args):
+    message = ' '.join(map(str, args))
+    print(message)  # Keep the print statement for local logging
+    if client and module_id:
+        publish_log(client, f"cockpit/{module_id}/log", message)
 
 def main():
     replace_boot_file()
@@ -176,10 +187,10 @@ def main():
 
     fallback_topic = f"cockpit/{module_id}/fallback"
     if check_fallback(client, fallback_topic):
-        log("Fallback triggered. Restoring main.py from backup...")
+        log(client, module_id, "Fallback triggered. Restoring main.py from backup...")
         restore_file('main.py')
         client.publish(fallback_topic, 'done', retain=True)
-        log("Fallback completed.")
+        log(client, module_id, "Fallback completed.")
 
     files_to_check = ['main.py', 'boot.py', 'config.py', 'include.py']
     for filepath in files_to_check:
@@ -190,21 +201,21 @@ def main():
         remote_hash_hex = remote_hash.decode() if remote_hash else None
 
         if local_hash_hex != remote_hash_hex:
-            log(f"Hash mismatch for {filepath}. Downloading new {filepath}...")
-            log(f"{local_hash_hex} != {remote_hash_hex}")
+            log(client, module_id, f"Hash mismatch for {filepath}. Downloading new {filepath}...")
+            log(client, module_id, f"{local_hash_hex} != {remote_hash_hex}")
             backup_file(filepath)
             file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
             new_content = download_file(file_url,filepath)
-            update_file(filepath, new_content)
-            log(f"{filepath} updated successfully.")
+            #update_file(filepath, new_content)
+            log(client, module_id, f"{filepath} updated successfully.")
         else:
-            log(f"Hash for {filepath} is identical, no update needed.")
+            log(client, module_id, f"Hash for {filepath} is identical, no update needed.")
 
     try:
-        log("Launching main.py")
+        log(client, module_id, "Launching main.py")
         import main
     except Exception as e:
-        log('Failed to import main.py:', e)
+        log(client, module_id, 'Failed to import main.py:', e)
 
 if __name__ == "__main__":
     main()
