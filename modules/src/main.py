@@ -9,7 +9,7 @@ def blink_morse_code():
     for symbol in morse_code:
         if symbol == ".":
             led.on()  # Allume la LED
-            time.sleep(0.5)  # Attend 0.5 seconde
+            time.sleep(0.1)  # Attend 0.5 seconde
         elif symbol == "-":
             led.on()  # Allume la LED
             time.sleep(1)  # Attend 1 seconde
