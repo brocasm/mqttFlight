@@ -1,70 +1,66 @@
-import machine
+import network
 import time
-import uasyncio as asyncio
+import machine
 from umqtt.simple import MQTTClient
 import config
-
 from include import log, generate_module_id
-LOG_SCRIPT_NAME = "main.py"
 
 module_id = generate_module_id()
+print(module_id)
 
-# Configure la broche D4 (GPIO2) comme sortie
-led = machine.Pin(2, machine.Pin.OUT)
-
-client = MQTTClient(config.MODULE_PREFIX + module_id, config.MQTT_BROKER, user=config.MQTT_USER, password=config.MQTT_PASSWORD)
-client.connect()
-
-log(level="ERROR", message="Is running...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
-
-def on_message(topic, msg):
-    topic_str = topic.decode('utf-8')
-    msg_str = msg.decode('utf-8')
-    if topic_str == 'cockpit/' + module_id + '/reboot':
-        if msg_str == 'True':
-            client.publish('cockpit/' + module_id + '/reboot', 'done')            
-            machine.reset()
-    elif topic_str.startswith('cockpit/default/'):
-        print("message reçu : " + msg_str)
-        client.publish('cockpit/' + module_id + '/logs', 'Reçu ' + msg_str + ':')
-
-client.set_callback(on_message)
-client.subscribe('cockpit/' + module_id + '/reboot')
-client.subscribe('cockpit/default/altitude')
-
-async def blink_morse_code():
-    morse_code = ".--....--."
-    for symbol in morse_code:
-        if symbol == ".":
-            led.on()  # Allume la LED
-            await asyncio.sleep(0.5)  # Attend 0.5 seconde
-        elif symbol == "-":
-            led.on()  # Allume la LED
-            await asyncio.sleep(1)  # Attend 1 seconde
-        led.off()  # Éteint la LED
-        await asyncio.sleep(0.5)  # Attend 0.5 seconde entre chaque symbole
-
-def reconnect():
-    while True:
-        try:
-            client.connect()
-            print("Reconnected to MQTT broker")
-            break
-        except OSError as e:
-            print(f"Failed to reconnect: {e}")
-            await asyncio.sleep(5)
-
-async def main():
-    while True:
-        try:
-            client.check_msg()
-            
-        except OSError as e:
-            print("ERROR mqtt")
-            reconnect()
+# Connect to Wi-Fi
+def connect_wifi():
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
+    while not wlan.isconnected():
         time.sleep(1)
-        await blink_morse_code()
+    print("Connected to Wi-Fi")
 
-# Démarrer la boucle d'événements asyncio
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
+# MQTT callback function
+def mqtt_callback(topic, msg):
+    global module_id
+    topic = topic.decode('utf-8')
+    msg = msg.decode('utf-8')
+    print(f"Received message: {msg} on topic: {topic}")
+
+    if topic == 'cockpit/default/altitude':
+        print(f"Altitude: {msg}")
+    elif topic == f'cockpit/{module_id}/reboot' and msg == 'True':
+        print("Reboot command received")
+        client.publish(f'cockpit/{module_id}/reboot', 'done')
+        time.sleep(1)
+        machine.reset()
+
+# Connect to MQTT broker
+def connect_mqtt():
+    global module_id
+    global client
+    client = MQTTClient(config.MODULE_PREFIX, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
+    client.set_callback(mqtt_callback)
+    client.connect()
+    topics = ['cockpit/default/altitude',f'cockpit/{module_id}/reboot']
+    print(topics)
+    for topic in topics:
+        print(f"ecoute du topic {topic}")
+        client.subscribe(topic)
+
+    
+    print("Connected to MQTT broker 2")
+
+# Main function
+def main():
+    connect_wifi()
+    connect_mqtt()
+
+    last_print_time = time.time()
+    while True:
+        client.check_msg()
+        time.sleep(0.1)
+        current_time = time.time()
+        if current_time - last_print_time >= 5:
+            print("keep picocom alive")
+            last_print_time = current_time
+
+if __name__ == "__main__":
+    main()
