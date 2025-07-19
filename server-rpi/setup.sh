@@ -10,7 +10,7 @@ apk update
 
 # Installer les paquets nécessaires pour le point d'accès Wi-Fi
 echo "Installation des paquets nécessaires pour le point d'accès Wi-Fi et serial..."
-apk add hostapd dnsmasq mosquitto picocom
+apk add hostapd dnsmasq mosquitto picocom logrotate cronie
 
 # Obtenir une fraction de l'adresse MAC pour le SSID
 MAC_ADDRESS=$(cat /sys/class/net/wlan1/address)
@@ -73,14 +73,24 @@ chmod +x modules/flash.sh modules/transfer.sh
 # Copier le script init.d en utilisant cat
 cat configs/init.d/mqttFlight-modulesrc > /etc/init.d/mqttFlight-modulesrc
 
+# Configurer logrotate pour Mosquitto
+cat configs/logrotate/mosquitto > /etc/logrotate.d/mosquitto
+cat configs/crontabs/root > /etc/crontabs/root
+rc-update add crond
+rc-service crond start
+
+
 # Rendre le script exécutable
 chmod +x /etc/init.d/mqttFlight-modulesrc
+
 
 # Ajouter le script au niveau d'exécution par défaut
 rc-update add mqttFlight-modulesrc
 
+
 # Redémarrer le service
 service mqttFlight-modulesrc restart
+
 
 # Activer et redémarrer Mosquitto
 rc-update add mosquitto
