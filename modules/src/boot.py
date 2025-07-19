@@ -9,7 +9,7 @@ import config
 import os
 from include import log
 
-BOOT_VERSION = "v0.5"
+BOOT_VERSION = "v0.6"
 
 def get_mqtt_client_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
@@ -182,7 +182,7 @@ def main():
 
         if local_hash_hex != remote_hash_hex:
             log(client, module_id, f"Hash mismatch for {filepath}. Downloading new {filepath}...")
-            log(client, module_id, f"{local_hash_hex} != {remote_hash_hex}")
+            log(client, module_id,"DEBUG", f"{local_hash_hex} != {remote_hash_hex}")
             backup_file(filepath)
             file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
             new_content = download_file(file_url,filepath)
@@ -192,7 +192,7 @@ def main():
             log(client, module_id, f"Hash for {filepath} is identical, no update needed.")
 
     try:
-        log(client, module_id, "Launching main.py")
+        log(client, module_id,"DEBUG", "Launching main.py")
         import main
     except Exception as e:
         log(client, module_id, "ERROR",'Failed to import main.py:', e)
