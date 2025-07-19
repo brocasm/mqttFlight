@@ -42,4 +42,4 @@ def blink_morse_code():
 
 while True:
     client.check_msg()
-    blink_morse_code()
+    #blink_morse_code()
