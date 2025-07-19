@@ -37,7 +37,7 @@ class MQTTHandler:
             self.client = MQTTClient(config.MODULE_PREFIX, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
             self.client.set_callback(self.mqtt_callback)
             self.client.connect(clean_session=False)
-            self.log("INFO", "Successfully connected to MQTT broker.")
+            self.log("WARNING", "Successfully connected to MQTT broker.")
         except OSError as e:
             self.log("ERROR", f"Failed to connect to MQTT broker: {e}")
             raise
@@ -55,10 +55,10 @@ class MQTTHandler:
         backoff_time = 1
         while True:
             try:
-                self.log("INFO", f"Reconnecting to MQTT broker in {backoff_time} seconds...")
+                self.log("WARNING", f"Reconnecting to MQTT broker in {backoff_time} seconds...")
                 await asyncio.sleep(backoff_time)
                 self.client.connect(clean_session=False)
-                self.log("INFO", "Reconnected to MQTT broker.")
+                self.log("WARNING", "Reconnected to MQTT broker.")
                 break
             except Exception as e:
                 self.log("ERROR", f"Reconnection failed: {e}. Retrying in {backoff_time * 2} seconds...")
