@@ -9,9 +9,8 @@ import config
 import os
 from include import log
 
-BOOT_VERSION = "v0.11"
+BOOT_VERSION = "v0.9"
 LOG_SCRIPT_NAME = "boot.py"
-REBOOT_COUNTER_TOPIC = "cockpit/{module_id}/reboot_counter"
 
 def get_mqtt_client_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
@@ -107,10 +106,11 @@ def get_remote_hash(client, topic):
 
     return remote_hash
 
-def download_file(url, filepath, chunk_size=1024):
+def download_file(url,filepath, chunk_size=1024):
     try:
         response = urequests.get(url)
         if response.status_code == 200:
+            # Ouvrir un fichier local pour écrire les données téléchargées
             with open(filepath, 'wb') as f:
                 while True:
                     chunk = response.raw.read(chunk_size)
@@ -131,7 +131,7 @@ def backup_file(filepath):
     with open(filepath, 'rb') as f_src:
         with open(filepath + '_backup', 'wb') as f_dst:
             while True:
-                buffer = f_src.read(512)
+                buffer = f_src.read(512)  # Lire en blocs de 512 octets
                 if not buffer:
                     break
                 f_dst.write(buffer)
@@ -159,27 +159,8 @@ def check_fallback(client, topic):
 
     return fallback
 
-def read_reboot_counter(client, module_id):
-    topic = REBOOT_COUNTER_TOPIC.format(module_id=module_id)
-    return get_boot_counter(client, topic)
-
-def write_reboot_counter(client, module_id, counter):
-    topic = REBOOT_COUNTER_TOPIC.format(module_id=module_id)
-    client.publish(topic, str(counter), retain=True)
-
-def reboot(client, module_id):
-    counter = read_reboot_counter(client, module_id)
-    counter += 1
-    write_reboot_counter(client, module_id, counter)
-
-    if counter > 5:
-        log(level="ERROR", message="Reboot counter exceeded 5. System halted.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
-        return
-
-    log(level="WARNING", message="Rebooting...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
-    machine.reset()
-
 def main():
+
     connect_wifi()
     module_id = generate_module_id()
     client = connect_mqtt(module_id)
@@ -206,16 +187,16 @@ def main():
             log(level="DEBUG", message=f"{local_hash_hex} != {remote_hash_hex}", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
             backup_file(filepath)
             file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
-            new_content = download_file(file_url, filepath)
+            new_content = download_file(file_url,filepath)
+            #update_file(filepath, new_content)
             log(level="WARNING", message=f"{filepath} updated successfully.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
         else:
             log(level="INFO", message=f"Hash for {filepath} is identical, no update needed.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
-
     if request_reboot:
-        reboot(client, module_id)
-
-    write_reboot_counter(client, module_id, 0)  # Reset reboot counter before launching main.py
-
+        log(level="WARNING", message="Rebooting...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+        time.sleep(2)
+        machine.reset()
+    
     try:
         log(level="DEBUG", message="Launching main.py", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
         import main
