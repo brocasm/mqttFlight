@@ -22,8 +22,7 @@ def on_message(topic, msg):
     msg_str = msg.decode('utf-8')
     if topic_str == 'cockpit/' + module_id + '/reboot':
         if msg_str == 'True':
-            client.publish('cockpit/' + module_id + '/reboot', 'done')
-            time.sleep(2)
+            client.publish('cockpit/' + module_id + '/reboot', 'done')            
             machine.reset()
 
 client.set_callback(on_message)
