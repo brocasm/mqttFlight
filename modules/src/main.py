@@ -25,6 +25,7 @@ def on_message(topic, msg):
             client.publish('cockpit/' + module_id + '/reboot', 'done')            
             machine.reset()
     elif topic_str.startswith('cockpit/default/'):
+        print("message reçu : " + msg_str)
         client.publish(topic_str, 'Reçu ' + msg_str + ':')
 
 client.set_callback(on_message)
@@ -43,9 +44,23 @@ async def blink_morse_code():
         led.off()  # Éteint la LED
         await asyncio.sleep(0.5)  # Attend 0.5 seconde entre chaque symbole
 
+def reconnect():
+    while True:
+        try:
+            client.connect()
+            log(level="ERROR", message="Reconnected to MQTT broker", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+            break
+        except OSError as e:
+            log(level="ERROR", message=f"Failed to reconnect: {e}", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+            await asyncio.sleep(5)
+
 async def main():
     while True:
-        client.check_msg()
+        try:
+            client.check_msg()
+        except OSError as e:
+            log(level="ERROR", message=f"Connection lost: {e}", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+            reconnect()
         await blink_morse_code()
 
 # Démarrer la boucle d'événements asyncio
