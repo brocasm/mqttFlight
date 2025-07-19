@@ -7,9 +7,9 @@ import uhashlib
 import urequests
 import config
 import os
-from include import log, LOG_SCRIPT_NAME
+from include import log
 
-BOOT_VERSION = "v0.6"
+BOOT_VERSION = "v0.7"
 LOG_SCRIPT_NAME = "boot.py"
 
 def get_mqtt_client_id():
