@@ -107,17 +107,17 @@ def get_remote_hash(client, topic):
 
     return remote_hash
 
-def download_file(url, chunk_size=1024):
+def download_file(url,filename, chunk_size=1024):
     try:
         response = urequests.get(url)
-        if response.status_code == 200:            
-            with open('downloaded_file', 'wb') as f:
+        if response.status_code == 200:                    
+            with open(filename, 'wb') as f:
                 while True:
                     chunk = response.raw.read(chunk_size)
                     if not chunk:
                         break
                     f.write(chunk)
-            return 'downloaded_file'
+            return filename
         else:
             raise Exception(f"Failed to download file: {response.status_code}")
     except Exception as e:
@@ -194,7 +194,7 @@ def main():
             log(f"{local_hash_hex} != {remote_hash_hex}")
             backup_file(filepath)
             file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
-            new_content = download_file(file_url)
+            new_content = download_file(file_url,filepath)
             update_file(filepath, new_content)
             log(f"{filepath} updated successfully.")
         else:
