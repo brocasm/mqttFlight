@@ -9,7 +9,7 @@ import config
 import os
 from include import log
 
-BOOT_VERSION = "v0.8"
+BOOT_VERSION = "v0.9"
 LOG_SCRIPT_NAME = "boot.py"
 
 def get_mqtt_client_id():
@@ -173,6 +173,7 @@ def main():
         log(level="WARNING", message="Fallback completed.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
 
     files_to_check = ['main.py', 'boot.py', 'config.py', 'include.py']
+    request_reboot = False
     for filepath in files_to_check:
         local_hash = calculate_file_hash(filepath)
         local_hash_hex = ubinascii.hexlify(local_hash).decode()
@@ -181,6 +182,7 @@ def main():
         remote_hash_hex = remote_hash.decode() if remote_hash else None
 
         if local_hash_hex != remote_hash_hex:
+            request_reboot = True
             log(level="WARNING", message=f"Hash mismatch for {filepath}. Downloading new {filepath}...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
             log(level="DEBUG", message=f"{local_hash_hex} != {remote_hash_hex}", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
             backup_file(filepath)
@@ -190,7 +192,10 @@ def main():
             log(level="WARNING", message=f"{filepath} updated successfully.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
         else:
             log(level="INFO", message=f"Hash for {filepath} is identical, no update needed.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
-
+    if request_reboot:
+        log(level="WARNING", message="Rebooting...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+        machine.reset()
+    
     try:
         log(level="DEBUG", message="Launching main.py", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
         import main
