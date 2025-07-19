@@ -7,6 +7,8 @@ import uasyncio as asyncio
 from core.connection_wifi import WifiConnection
 from core.mqtt import MQTTHandler  # Import MQTTHandler
 
+LOG_SCRIPT_NAME = "main.py"
+
 module_id = generate_module_id()
 
 wifi = None

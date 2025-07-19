@@ -9,7 +9,7 @@ import config
 import os
 from include import log, generate_module_id
 
-BOOT_VERSION = "v0.13"
+BOOT_VERSION = "v0.14"
 LOG_SCRIPT_NAME = "boot.py"
 
 def get_mqtt_client_id():
@@ -191,7 +191,7 @@ def main():
         machine.reset()
     
     try:
-        log(level="DEBUG", message="Launching main.py", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+        log(level="WARNING", message="Launching main.py", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
         import main
     except Exception as e:
         log(level="ERROR", message=f'Failed to import main.py: {e}', filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
