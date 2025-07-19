@@ -25,6 +25,10 @@ for file in $files; do
     fi
 done
 
+# Crée le dossier core sur l'ESP8266
+echo "Création du dossier core sur l'ESP8266..."
+ampy --port /dev/ttyUSB0 mkdir /core
+
 # Transfère tous les fichiers du dossier core en conservant leur structure
 core_path="$source_path/core"
 for file in $(find "$core_path" -type f); do
