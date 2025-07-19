@@ -1,4 +1,5 @@
-import os 
+import os
+import config 
 
 def log(*args, client=None, module_id=None , level="INFO"):
     message = ' '.join(map(str, args))
