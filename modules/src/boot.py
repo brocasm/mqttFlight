@@ -106,6 +106,14 @@ def get_remote_hash(client, topic):
 
     return remote_hash
 
+def compare_hashes(filepath, client):
+    local_hash = calculate_file_hash(filepath)
+    local_hash_hex = ubinascii.hexlify(local_hash).decode()
+    remote_hash_topic = f"system/hash/{filepath}"
+    remote_hash = get_remote_hash(client, remote_hash_topic)
+    remote_hash_hex = remote_hash.decode() if remote_hash else None
+    return local_hash_hex == remote_hash_hex
+
 def download_file(url,filepath, chunk_size=1024):
     try:
         response = urequests.get(url)
@@ -122,10 +130,6 @@ def download_file(url,filepath, chunk_size=1024):
             raise Exception(f"Failed to download file: {response.status_code}")
     except Exception as e:
         raise Exception(f"An error occurred: {str(e)}")
-
-def update_file(filepath, content):
-    with open(filepath, 'wb') as f:
-        f.write(content)
 
 def backup_file(filepath):
     with open(filepath, 'rb') as f_src:
@@ -175,20 +179,15 @@ def main():
     files_to_check = ['main.py', 'boot.py', 'config.py', 'include.py']
     request_reboot = False
     for filepath in files_to_check:
-        local_hash = calculate_file_hash(filepath)
-        local_hash_hex = ubinascii.hexlify(local_hash).decode()
-        remote_hash_topic = f"system/hash/{filepath}"
-        remote_hash = get_remote_hash(client, remote_hash_topic)
-        remote_hash_hex = remote_hash.decode() if remote_hash else None
+        
 
-        if local_hash_hex != remote_hash_hex:
+        if not compare_hashes(filepath, client):
             request_reboot = True
             log(level="WARNING", message=f"Hash mismatch for {filepath}. Downloading new {filepath}...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
             log(level="DEBUG", message=f"{local_hash_hex} != {remote_hash_hex}", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
             backup_file(filepath)
             file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
-            new_content = download_file(file_url,filepath)
-            #update_file(filepath, new_content)
+            download_file(file_url,filepath)            
             log(level="WARNING", message=f"{filepath} updated successfully.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
         else:
             log(level="INFO", message=f"Hash for {filepath} is identical, no update needed.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
