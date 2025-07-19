@@ -24,9 +24,12 @@ def on_message(topic, msg):
         if msg_str == 'True':
             client.publish('cockpit/' + module_id + '/reboot', 'done')            
             machine.reset()
+    elif topic_str.startswith('cockpit/default/'):
+        client.publish(topic_str, 'Reçu ' + msg_str + ':')
 
 client.set_callback(on_message)
 client.subscribe('cockpit/' + module_id + '/reboot')
+client.subscribe('cockpit/default/#')
 
 async def blink_morse_code():
     morse_code = ".--....--."
