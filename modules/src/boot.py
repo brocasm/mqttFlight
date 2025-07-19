@@ -7,9 +7,10 @@ import uhashlib
 import urequests
 import config
 import os
-from include import log
+from include import log, LOG_SCRIPT_NAME
 
 BOOT_VERSION = "v0.6"
+LOG_SCRIPT_NAME = "boot.py"
 
 def get_mqtt_client_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
@@ -69,7 +70,7 @@ def connect_mqtt(module_id):
     client_id = get_mqtt_client_id()
     client = MQTTClient(client_id, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
     client.connect()
-    log(client, module_id, 'Connected to MQTT Broker')
+    log(level="INFO", message='Connected to MQTT Broker', filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
 
     topic = "cockpit/" + module_id + "/countboot"
     boot_counter = get_boot_counter(client, topic)
@@ -158,8 +159,7 @@ def check_fallback(client, topic):
 
     return fallback
 
-
-def main():    
+def main():
 
     connect_wifi()
     module_id = generate_module_id()
@@ -167,10 +167,10 @@ def main():
 
     fallback_topic = f"cockpit/{module_id}/fallback"
     if check_fallback(client, fallback_topic):
-        log(client, module_id, "WARNING", "Fallback triggered. Restoring main.py from backup...")
+        log(level="WARNING", message="Fallback triggered. Restoring main.py from backup...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
         restore_file('main.py')
         client.publish(fallback_topic, 'done', retain=True)
-        log(client, module_id,  "WARNING", "Fallback completed.")
+        log(level="WARNING", message="Fallback completed.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
 
     files_to_check = ['main.py', 'boot.py', 'config.py', 'include.py']
     for filepath in files_to_check:
@@ -181,21 +181,21 @@ def main():
         remote_hash_hex = remote_hash.decode() if remote_hash else None
 
         if local_hash_hex != remote_hash_hex:
-            log(client, module_id, f"Hash mismatch for {filepath}. Downloading new {filepath}...")
-            log(client, module_id,"DEBUG", f"{local_hash_hex} != {remote_hash_hex}")
+            log(level="WARNING", message=f"Hash mismatch for {filepath}. Downloading new {filepath}...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+            log(level="DEBUG", message=f"{local_hash_hex} != {remote_hash_hex}", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
             backup_file(filepath)
             file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
             new_content = download_file(file_url,filepath)
             #update_file(filepath, new_content)
-            log(client, module_id,"WARNING", f"{filepath} updated successfully.")
+            log(level="WARNING", message=f"{filepath} updated successfully.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
         else:
-            log(client, module_id, f"Hash for {filepath} is identical, no update needed.")
+            log(level="INFO", message=f"Hash for {filepath} is identical, no update needed.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
 
     try:
-        log(client, module_id,"DEBUG", "Launching main.py")
+        log(level="DEBUG", message="Launching main.py", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
         import main
     except Exception as e:
-        log(client, module_id, "ERROR",'Failed to import main.py:', e)
+        log(level="ERROR", message=f'Failed to import main.py: {e}', filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
 
 if __name__ == "__main__":
     main()
