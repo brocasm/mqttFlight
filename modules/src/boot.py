@@ -10,7 +10,7 @@ import os
 from include import log
 
 
-BOOT_VERSION = "v0.3"
+BOOT_VERSION = "v0.4"
 
 def get_mqtt_client_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
@@ -110,8 +110,7 @@ def get_remote_hash(client, topic):
 def download_file(url, chunk_size=1024):
     try:
         response = urequests.get(url)
-        if response.status_code == 200:
-            # Ouvrir un fichier local pour écrire les données téléchargées
+        if response.status_code == 200:            
             with open('downloaded_file', 'wb') as f:
                 while True:
                     chunk = response.raw.read(chunk_size)
