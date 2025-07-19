@@ -11,22 +11,22 @@ module_id = generate_module_id()
 # Configure la broche D4 (GPIO2) comme sortie
 led = machine.Pin(2, machine.Pin.OUT)
 
-
-
 client = MQTTClient(config.MODULE_PREFIX + module_id, config.MQTT_BROKER, user=config.MQTT_USER, password=config.MQTT_PASSWORD)
 client.connect()
 
 log(level="ERROR", message="Is running...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
 
 def on_message(topic, msg):
-    if topic == b'cockpit/' + module_id + b'/reboot':
-        if msg == b'True':
-            client.publish(b'cockpit/' + module_id + b'/reboot', b'done')
+    topic_str = topic.decode('utf-8')
+    msg_str = msg.decode('utf-8')
+    if topic_str == 'cockpit/' + module_id + '/reboot':
+        if msg_str == 'True':
+            client.publish('cockpit/' + module_id + '/reboot', 'done')
             time.sleep(2)
             machine.reset()
 
 client.set_callback(on_message)
-client.subscribe(b'cockpit/' + module_id + b'/reboot')
+client.subscribe('cockpit/' + module_id + '/reboot')
 
 def blink_morse_code():
     morse_code = ".--....--."
