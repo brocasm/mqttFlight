@@ -183,8 +183,7 @@ def main():
 
         if not compare_hashes(filepath, client):
             request_reboot = True
-            log(level="WARNING", message=f"Hash mismatch for {filepath}. Downloading new {filepath}...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
-            log(level="DEBUG", message=f"{local_hash_hex} != {remote_hash_hex}", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+            log(level="WARNING", message=f"Hash mismatch for {filepath}. Downloading new {filepath}...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)            
             backup_file(filepath)
             file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
             download_file(file_url,filepath)            
