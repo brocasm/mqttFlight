@@ -9,7 +9,7 @@ import config
 import os
 from include import log
 
-BOOT_VERSION = "v0.4"
+BOOT_VERSION = "v0.5"
 
 def get_mqtt_client_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
@@ -159,13 +159,6 @@ def check_fallback(client, topic):
 
     return fallback
 
-def replace_boot_file():
-    if 'boot-new.py' in os.listdir():
-        print("Replacing boot.py with boot-new.py...")
-        os.rename('boot-new.py', 'boot.py')
-        print("***** boot.py updated successfully. ********")
-        machine.reset()
-
 def publish_log(client, topic, message):
     try:
         client.publish(topic, message)
@@ -178,8 +171,7 @@ def log(client, module_id, *args):
     if client and module_id:
         publish_log(client, f"cockpit/{module_id}/log", message)
 
-def main():
-    replace_boot_file()
+def main():    
 
     connect_wifi()
     module_id = generate_module_id()
@@ -187,10 +179,10 @@ def main():
 
     fallback_topic = f"cockpit/{module_id}/fallback"
     if check_fallback(client, fallback_topic):
-        log(client, module_id, "Fallback triggered. Restoring main.py from backup...")
+        log(client, module_id, "WARNING", "Fallback triggered. Restoring main.py from backup...")
         restore_file('main.py')
         client.publish(fallback_topic, 'done', retain=True)
-        log(client, module_id, "Fallback completed.")
+        log(client, module_id,  "WARNING", "Fallback completed.")
 
     files_to_check = ['main.py', 'boot.py', 'config.py', 'include.py']
     for filepath in files_to_check:
@@ -207,7 +199,7 @@ def main():
             file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
             new_content = download_file(file_url,filepath)
             #update_file(filepath, new_content)
-            log(client, module_id, f"{filepath} updated successfully.")
+            log(client, module_id,"WARNING", f"{filepath} updated successfully.")
         else:
             log(client, module_id, f"Hash for {filepath} is identical, no update needed.")
 
@@ -215,7 +207,7 @@ def main():
         log(client, module_id, "Launching main.py")
         import main
     except Exception as e:
-        log(client, module_id, 'Failed to import main.py:', e)
+        log(client, module_id, "ERROR",'Failed to import main.py:', e)
 
 if __name__ == "__main__":
     main()
