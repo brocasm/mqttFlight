@@ -1,5 +1,6 @@
 import machine
 import time
+import uasyncio as asyncio
 from umqtt.simple import MQTTClient
 import config
 
@@ -28,18 +29,23 @@ def on_message(topic, msg):
 client.set_callback(on_message)
 client.subscribe('cockpit/' + module_id + '/reboot')
 
-def blink_morse_code():
+async def blink_morse_code():
     morse_code = ".--....--."
     for symbol in morse_code:
         if symbol == ".":
             led.on()  # Allume la LED
-            time.sleep(0.5)  # Attend 0.5 seconde
+            await asyncio.sleep(0.5)  # Attend 0.5 seconde
         elif symbol == "-":
             led.on()  # Allume la LED
-            time.sleep(1)  # Attend 1 seconde
+            await asyncio.sleep(1)  # Attend 1 seconde
         led.off()  # Éteint la LED
-        time.sleep(0.5)  # Attend 0.5 seconde entre chaque symbole
+        await asyncio.sleep(0.5)  # Attend 0.5 seconde entre chaque symbole
 
-while True:
-    client.check_msg()
-    #blink_morse_code()
+async def main():
+    while True:
+        client.check_msg()
+        await blink_morse_code()
+
+# Démarrer la boucle d'événements asyncio
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main())
