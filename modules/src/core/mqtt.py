@@ -35,19 +35,19 @@ class MQTTHandler:
     def log(self, level, message):
         log(client=self.client, level=level, message=message, module_id=self.module_id)
 
-    async def subscribe(self, topics):              
+    async def subscribe(self, topics):                      
         for topic in topics:
             self.client.subscribe(topic)
-            self.log("DEBUG", f"Subscribed to topic {topic}")
+            self.log("DEBUG", f"Subscribed to topic {topic}")            
 
     async def connect_mqtt(self):
         self.client = MQTTClient(config.MODULE_PREFIX, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
         self.client.set_callback(self.mqtt_callback)
         self.client.connect(clean_session=False)
-        print("Connected to MQTT broker")
+        print("Connected to MQTTHandler")
 
         topics = ['cockpit/default/altitude', f'cockpit/{self.module_id}/reboot']
-        self.subscribe(topics)
+        await self.subscribe(topics)
         
     
     async def mqtt_loop(self):
