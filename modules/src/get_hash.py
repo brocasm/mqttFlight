@@ -22,7 +22,7 @@ def publish_sha256_of_files(directory):
         for file in files:
             file_path = os.path.join(root, file)
             file_hash = calculate_sha256(file_path)
-            topic = f"system/hash/{os.path.basename(file_path)}"
+            topic = f"system/hash/{file_path}"
             client.publish(topic, file_hash, retain=True)
             print(f"Published hash for {file_path}: {file_hash}")
             time.sleep(1)
