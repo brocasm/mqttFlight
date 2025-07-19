@@ -9,9 +9,9 @@ import config
 import os
 from include import log
 
-BOOT_VERSION = "v0.10"
+BOOT_VERSION = "v0.11"
 LOG_SCRIPT_NAME = "boot.py"
-REBOOT_COUNTER_FILE = "reboot_counter.txt"
+REBOOT_COUNTER_TOPIC = "cockpit/{module_id}/reboot_counter"
 
 def get_mqtt_client_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
@@ -159,21 +159,18 @@ def check_fallback(client, topic):
 
     return fallback
 
-def read_reboot_counter():
-    try:
-        with open(REBOOT_COUNTER_FILE, 'r') as f:
-            return int(f.read().strip())
-    except OSError:
-        return 0
+def read_reboot_counter(client, module_id):
+    topic = REBOOT_COUNTER_TOPIC.format(module_id=module_id)
+    return get_boot_counter(client, topic)
 
-def write_reboot_counter(counter):
-    with open(REBOOT_COUNTER_FILE, 'w') as f:
-        f.write(str(counter))
+def write_reboot_counter(client, module_id, counter):
+    topic = REBOOT_COUNTER_TOPIC.format(module_id=module_id)
+    client.publish(topic, str(counter), retain=True)
 
-def reboot():
-    counter = read_reboot_counter()
+def reboot(client, module_id):
+    counter = read_reboot_counter(client, module_id)
     counter += 1
-    write_reboot_counter(counter)
+    write_reboot_counter(client, module_id, counter)
 
     if counter > 5:
         log(level="ERROR", message="Reboot counter exceeded 5. System halted.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
@@ -215,9 +212,9 @@ def main():
             log(level="INFO", message=f"Hash for {filepath} is identical, no update needed.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
 
     if request_reboot:
-        reboot()
-    
-    write_reboot_counter(0)  # Reset reboot counter before launching main.py
+        reboot(client, module_id)
+
+    write_reboot_counter(client, module_id, 0)  # Reset reboot counter before launching main.py
 
     try:
         log(level="DEBUG", message="Launching main.py", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
