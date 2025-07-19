@@ -25,5 +25,22 @@ for file in $files; do
     fi
 done
 
+# Transfère tous les fichiers du dossier core
+core_files=$(ls "$source_path/core")
+for file in $core_files; do
+    source_file="$source_path/core/$file"
+    echo "Transfert de $source_file sur l'ESP8266..."
+    ampy --port /dev/ttyUSB0 put $source_file
+
+    # Vérifie si le transfert a réussi
+    if [ $? -eq 0 ]; then
+        echo "Transfert de $file terminé avec succès."
+    else
+        echo "Erreur lors du transfert de $file."
+        deactivate
+        exit 1
+    fi
+done
+
 # Désactive l'environnement virtuel
 deactivate

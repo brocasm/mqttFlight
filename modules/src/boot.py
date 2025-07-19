@@ -171,7 +171,7 @@ def main():
         client.publish(fallback_topic, 'done', retain=True)
         log(level="WARNING", message="Fallback completed.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
 
-    files_to_check = ['main.py', 'boot.py', 'config.py', 'include.py']
+    files_to_check = ['main.py', 'boot.py', 'config.py', 'include.py', 'core/connection_wifi.py', 'core/mqtt.py']
     request_reboot = False
     for filepath in files_to_check:
         
