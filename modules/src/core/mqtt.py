@@ -20,18 +20,9 @@ class MQTTHandler:
 
     def mqtt_callback(self, topic, msg):
         print(f"Received message: {msg} on topic: {topic}")
-        topic = topic.decode('utf-8')
-        msg = msg.decode('utf-8')
-        
+              
 
-        if topic == 'cockpit/default/altitude':
-            print(f"Altitude: {msg}")
-            asyncio.create_task(self.blink_led())  # Blink the LED when a message is received on the altitude topic
-        elif topic == f'cockpit/{self.module_id}/reboot' and msg == 'True':
-            print("Reboot command received")
-            self.client.publish(f'cockpit/{self.module_id}/reboot', 'done')
-            time.sleep(1)
-            machine.reset()
+        
     def log(self, level, message):
         log(client=self.client, level=level, message=message, module_id=self.module_id)
 
@@ -44,10 +35,7 @@ class MQTTHandler:
         self.client = MQTTClient(config.MODULE_PREFIX, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
         self.client.set_callback(self.mqtt_callback)
         self.client.connect(clean_session=False)
-        print("Connected to MQTTHandler")
-
-        topics = ['cockpit/default/altitude', f'cockpit/{self.module_id}/reboot']
-        await self.subscribe(topics)
+        print("Connected to MQTTHandler")        
         
     
     async def mqtt_loop(self):

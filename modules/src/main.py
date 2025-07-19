@@ -12,11 +12,27 @@ module_id = generate_module_id()
 wifi = None
 mqtt_handler = None
 
+class CustomMQTTHandler(MQTTHandler):
+    def mqtt_callback(self, topic, msg):
+        super().mqtt_callback(topic, msg)
+
+        topic = topic.decode('utf-8')
+        msg = msg.decode('utf-8')
+        if topic == 'cockpit/default/altitude':
+            print(f"Altitude reçu: {msg}")
+            asyncio.create_task(self.blink_led())  # Blink the LED when a message is received on the altitude topic
+        elif topic == f'cockpit/{self.module_id}/reboot' and msg == 'True':
+            print("Reboot command received")
+            self.client.publish(f'cockpit/{self.module_id}/reboot', 'done')
+            time.sleep(1)
+            machine.reset()
+
 # Connect to Wi-Fi
 async def connect_wifi():
     global wifi
     wifi = WifiConnection()
     await wifi.connect()
+
 
 # Main function
 async def main():
@@ -24,8 +40,11 @@ async def main():
 
     await connect_wifi()
 
-    mqtt_handler = MQTTHandler()
+    mqtt_handler = CustomMQTTHandler()
     await mqtt_handler.connect_mqtt()
+
+    topics = ['cockpit/default/altitude', f'cockpit/{module_id}/reboot']
+    await mqtt_handler.subscribe(topics)
 
     last_print_time = time.time()
 
@@ -36,7 +55,7 @@ async def main():
         await asyncio.sleep(0.1)
         current_time = time.time()
         if current_time - last_print_time >= 5:
-            print("keep picocom alive")
+            print("keep ampy alive")
             last_print_time = current_time
 
 if __name__ == "__main__":
