@@ -75,8 +75,7 @@ def connect_mqtt(module_id):
     boot_counter = get_boot_counter(client, topic)
     boot_counter += 1
     client.publish(topic, str(boot_counter), retain=True)
-    client.publish("cockpit/" + module_id + "/version/boot", BOOT_VERSION)
-    log(client, module_id, 'Published last boot message to topic:', topic)
+    client.publish("cockpit/" + module_id + "/version/boot", BOOT_VERSION)    
 
     return client
 
@@ -159,17 +158,6 @@ def check_fallback(client, topic):
 
     return fallback
 
-def publish_log(client, topic, message):
-    try:
-        client.publish(topic, message)
-    except Exception as e:
-        print(f"Failed to publish log: {e}")
-
-def log(client, module_id, *args):
-    message = ' '.join(map(str, args))
-    print(message)  # Keep the print statement for local logging
-    if client and module_id:
-        publish_log(client, f"cockpit/{module_id}/log", message)
 
 def main():    
 
