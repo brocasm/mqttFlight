@@ -2,7 +2,9 @@ import machine
 import time
 from umqtt.simple import MQTTClient
 import config
+
 from include import log
+LOG_SCRIPT_NAME = "main.py"
 
 # Configure la broche D4 (GPIO2) comme sortie
 led = machine.Pin(2, machine.Pin.OUT)
