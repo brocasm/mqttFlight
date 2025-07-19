@@ -32,26 +32,36 @@ class MQTTHandler:
             self.log("DEBUG", f"Subscribed to topic {topic}")            
 
     async def connect_mqtt(self):
-        self.client = MQTTClient(config.MODULE_PREFIX, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
-        self.client.set_callback(self.mqtt_callback)
-        self.client.connect(clean_session=False)
-        print("Connected to MQTTHandler")        
-        
-    
+        self.log("INFO", "Attempting to connect to MQTT broker...")
+        try:
+            self.client = MQTTClient(config.MODULE_PREFIX, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
+            self.client.set_callback(self.mqtt_callback)
+            self.client.connect(clean_session=False)
+            self.log("INFO", "Successfully connected to MQTT broker.")
+        except OSError as e:
+            self.log("ERROR", f"Failed to connect to MQTT broker: {e}")
+            raise
+
     async def mqtt_loop(self):
         while True:
             try:
                 self.client.check_msg()
             except Exception as e:
-                print("Perte de connexion détectée, reconnexion en cours...")
-                while True:
-                    try:
-                        self.client.connect(clean_session=False)                        
-                        print("Reconnecté au broker MQTT")
-                        break
-                    except Exception as e:
-                        print("Nouvel échec de connexion, retry dans 5 secondes")
-                        await asyncio.sleep(5)
-            await asyncio.sleep_ms(100)    
+                self.log("ERROR", f"Connection lost: {e}. Attempting to reconnect...")
+                await self.reconnect_mqtt()
+            await asyncio.sleep_ms(100)
+
+    async def reconnect_mqtt(self):
+        backoff_time = 1
+        while True:
+            try:
+                self.log("INFO", f"Reconnecting to MQTT broker in {backoff_time} seconds...")
+                await asyncio.sleep(backoff_time)
+                self.client.connect(clean_session=False)
+                self.log("INFO", "Reconnected to MQTT broker.")
+                break
+            except Exception as e:
+                self.log("ERROR", f"Reconnection failed: {e}. Retrying in {backoff_time * 2} seconds...")
+                backoff_time = min(backoff_time * 2, 60)  # Exponential backoff with a max wait time of 60 seconds
 
     
