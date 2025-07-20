@@ -7,7 +7,8 @@ import uhashlib
 import urequests
 import config
 import os
-from include import log, generate_module_id
+import uasyncio as asyncio
+from include import log, generate_module_id, keep_ampy_alive
 from core.connection_wifi import WifiConnection
 from core.mqtt import MQTTHandler
 
@@ -18,17 +19,10 @@ wifi = None
 
 module_id = generate_module_id()
 
-def get_mqtt_client_id():
-    mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
-    return config.MODULE_PREFIX + mac.replace(":", "")[-6:]
-
-def connect_wifi():
+async def connect_wifi():
     global wifi
     wifi = WifiConnection()
     await wifi.connect()
-
-
-
 
 def calculate_file_hash(filepath):
     with open(filepath, 'rb') as f:
@@ -39,36 +33,18 @@ def calculate_file_hash(filepath):
             buf = f.read(128)
     return hasher.digest()
 
-def get_remote_hash(client, topic):
-    def on_message(topic, msg):
-        nonlocal remote_hash
-        remote_hash = msg
-
-    remote_hash = None
-    client.set_callback(on_message)
-    client.subscribe(topic)
-
-    start_time = time.time()
-    while time.time() - start_time < 5:
-        client.check_msg()
-        if remote_hash is not None:
-            break
-
-    return remote_hash
 
 def compare_hashes(filepath, client):
     local_hash = calculate_file_hash(filepath)
-    local_hash_hex = ubinascii.hexlify(local_hash).decode()
-    remote_hash_topic = f"system/hash/{filepath}"
-    remote_hash = get_remote_hash(client, remote_hash_topic)
-    remote_hash_hex = remote_hash.decode() if remote_hash else None
+    local_hash_hex = ubinascii.hexlify(local_hash).decode()    
+    
+    remote_hash_hex = mqtt_handler.get_value_retained(f"system/hash/{filepath}", None)    
     return local_hash_hex == remote_hash_hex
 
-def download_file(url,filepath, chunk_size=1024):
+def download_file(url, filepath, chunk_size=1024):
     try:
         response = urequests.get(url)
         if response.status_code == 200:
-            # Ouvrir un fichier local pour écrire les données téléchargées
             with open(filepath, 'wb') as f:
                 while True:
                     chunk = response.raw.read(chunk_size)
@@ -85,7 +61,7 @@ def backup_file(filepath):
     with open(filepath, 'rb') as f_src:
         with open(filepath + '_backup', 'wb') as f_dst:
             while True:
-                buffer = f_src.read(512)  # Lire en blocs de 512 octets
+                buffer = f_src.read(512)
                 if not buffer:
                     break
                 f_dst.write(buffer)
@@ -122,16 +98,9 @@ class CustomMQTTHandler(MQTTHandler):
         msg = msg.decode('utf-8')
 
         if topic == f"system/countboot/{module_id}":
-            try:
-                boot_counter = int(msg.decode())
-            except ValueError:
-                boot_counter = 0            
-            boot_counter += 1
-            client.publish(f"system/countboot/{module_id}", str(boot_counter), retain=True)
-            client.publish(f"system/version/boot/{module_id}", BOOT_VERSION)  
-           
+            pass
+            
 
-# Main function
 async def main():
     global mqtt_handler
 
@@ -142,40 +111,40 @@ async def main():
     await mqtt_handler.connect_mqtt()    
 
     topics = [f"system/countboot/{module_id}"]
-    await mqtt_handler.subscribe(topics)
+    #await mqtt_handler.subscribe(topics)
+
+    boot_counter = int(mqtt_handler.get_value_retained(f"system/countboot/{module_id}",0))
+    boot_counter += 1
+    mqtt_handler.client.publish(f"system/countboot/{module_id}", str(boot_counter), retain=True)
+    mqtt_handler.client.publish(f"system/version/boot/{module_id}", BOOT_VERSION)
 
     last_print_time = time.time()
 
-    # Create a task for the MQTT loop
     mqtt_task = asyncio.create_task(mqtt_handler.mqtt_loop())
     keep_ampy_alive_task = asyncio.create_task(keep_ampy_alive())
 
     files_to_check = ['main.py', 'boot.py', 'config.py', 'include.py', 'core/connection_wifi.py', 'core/mqtt.py']
     request_reboot = False
     for filepath in files_to_check:
-        
-
-        if not compare_hashes(filepath, client):
+        if not compare_hashes(filepath, mqtt_handler.client):
             request_reboot = True
-            log(level="WARNING", message=f"Hash mismatch for {filepath}. Downloading new {filepath}...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)            
+            mqtt_handler.log("WARNING", f"Hash mismatch for {filepath}. Downloading new {filepath}...")                    
             backup_file(filepath)
             file_url = f"http://{config.SERVER_ADDRESS}:8000/{filepath}"
-            download_file(file_url,filepath)            
-            log(level="WARNING", message=f"{filepath} updated successfully.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+            download_file(file_url, filepath)
+            mqtt_handler.log("WARNING", f"{filepath} updated successfully.")
         else:
-            log(level="INFO", message=f"Hash for {filepath} is identical, no update needed.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+            mqtt_handler.log("INFO", f"Hash for {filepath} is identical, no update needed.")
     if request_reboot:
-        log(level="WARNING", message="Rebooting...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+        mqtt_handler.log("WARNING", "Rebooting...")
         time.sleep(2)
         machine.reset()
     
     try:
-        log(level="WARNING", message="Launching main.py", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+        mqtt_handler.log("WARNING", "Launching main.py")
         import main
     except Exception as e:
-        log(level="ERROR", message=f'Failed to import main.py: {e}', filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
-
-    
+        mqtt_handler.log("ERROR", f'Failed to import main.py: {e}')
 
 if __name__ == "__main__":
     asyncio.run(main())

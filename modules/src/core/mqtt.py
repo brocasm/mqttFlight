@@ -29,7 +29,31 @@ class MQTTHandler:
             print(f"Total messages received: {self.received_messages}")
             self.client.publish(f"system/received_messages/{self.module_id}",str(self.received_messages))
               
+    def get_value_retained(self, topic, default=None):
 
+        client = MQTTClient(self.module_id+"-TEMP", config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
+        client.set_callback(self.mqtt_callback)
+        client.connect(clean_session=False)    
+
+        def on_message(topic, msg):
+            nonlocal ret
+            try:
+                ret = msg.decode()
+            except ValueError:
+                ret = default
+
+        ret = None
+        client.set_callback(on_message)
+        client.subscribe(topic)
+
+        start_time = time.time()
+        while time.time() - start_time < 5:
+            client.check_msg()
+            if ret != None:
+                break
+        
+        client.disconnect()
+        return ret   
         
     def log(self, level, message):
         log(client=self.client, level=level, message=message, module_id=self.module_id, filepath=self.LOG_SCRIPT_NAME)
@@ -37,7 +61,8 @@ class MQTTHandler:
     async def subscribe(self, topics):                      
         for topic in topics:
             self.client.subscribe(topic)
-            self.log("DEBUG", f"Subscribed to topic {topic}")            
+            self.log("DEBUG", f"Subscribed to topic {topic}")
+            self.client.check_msg()            
 
     async def connect_mqtt(self):
         self.log("INFO", "Attempting to connect to MQTT broker...")

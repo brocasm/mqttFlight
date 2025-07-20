@@ -2,7 +2,7 @@ import network
 import time
 import machine
 import config
-from include import generate_module_id
+from include import generate_module_id, keep_ampy_alive
 import uasyncio as asyncio
 from core.connection_wifi import WifiConnection
 from core.mqtt import MQTTHandler
