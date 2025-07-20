@@ -3,6 +3,7 @@ import config
 import ubinascii
 import network
 import time
+import uasyncio as asyncio
 
 def log(client=None, module_id=None , level="INFO", message="", filepath=None):
     
