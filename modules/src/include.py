@@ -20,14 +20,14 @@ def log(client=None, module_id=None , level="INFO", message="", filepath=None):
         print(message)
         if client and module_id:                  
             try:
-                client.publish(f"cockpit/{module_id}/logs/{filepath}", message)
+                client.publish(f"system/logs/{filepath}/{module_id}", message)
             except Exception as e:
                 print(f"Failed to publish log: {e}")
 
 
 def generate_module_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
-    module_id = "modules-" + mac.replace(":", "")[-6:]
+    module_id = config.MODULE_PREFIX + mac.replace(":", "")[-6:]
     return module_id
 
 
