@@ -42,7 +42,7 @@ class MQTTHandler:
     async def connect_mqtt(self):
         self.log("INFO", "Attempting to connect to MQTT broker...")
         try:
-            self.client = MQTTClient(config.MODULE_PREFIX, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
+            self.client = MQTTClient(config.MODULE_PREFIX+self.module_id, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
             self.client.set_callback(self.mqtt_callback)
             self.client.connect(clean_session=False)
             self.log("WARNING", "Successfully connected to MQTT broker.")
