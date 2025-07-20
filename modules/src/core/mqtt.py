@@ -5,6 +5,8 @@ import uasyncio as asyncio
 import config
 from include import log, generate_module_id
 
+received_messages = 0
+
 class MQTTHandler:
     def __init__(self):
         self.module_id = generate_module_id()
@@ -21,6 +23,11 @@ class MQTTHandler:
 
     def mqtt_callback(self, topic, msg):
         print(f"Received message: {msg} on topic: {topic}")
+        if DEV_MODE:
+            global received_messages
+            received_messages += 1
+            print(f"Total messages received: {received_messages}")
+            self.client.publish("cockpit/{module_id}/received_messages",received_messages)
               
 
         
