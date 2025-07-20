@@ -23,7 +23,7 @@ class MQTTHandler:
 
     def mqtt_callback(self, topic, msg):
         print(f"Received message: {msg} on topic: {topic}")
-        if DEV_MODE:
+        if config.DEV_MODE:
             global received_messages
             received_messages += 1
             print(f"Total messages received: {received_messages}")
