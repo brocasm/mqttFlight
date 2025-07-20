@@ -150,6 +150,8 @@ fi
 progress "${ICON_CONF} Définition des permissions pour Mosquitto..."
 chown mosquitto:mosquitto /etc/mosquitto/pwfile
 chmod 644 /etc/mosquitto/pwfile
+chown mosquitto:mosquitto -R /etc/mosquitto/
+chmod 755 /etc/mosquitto/
 chown mosquitto:mosquitto /etc/mosquitto/acl.conf
 chmod 644 /etc/mosquitto/acl.conf
 mkdir -p /var/lib/mosquitto/
