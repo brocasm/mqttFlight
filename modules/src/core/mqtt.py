@@ -1,6 +1,6 @@
 import machine
 import time
-from umqtt.simple import MQTTClient
+from umqtt.robust import MQTTClient
 import uasyncio as asyncio
 import config
 from include import log, generate_module_id

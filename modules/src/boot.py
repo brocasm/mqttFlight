@@ -2,7 +2,7 @@ import network
 import time
 import machine
 import ubinascii
-from umqtt.simple import MQTTClient
+from umqtt.robust import MQTTClient
 import uhashlib
 import urequests
 import config
