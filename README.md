@@ -84,16 +84,18 @@ graph LR
   - Lightweight Alpine Linux base system  
 
 ## Getting Started  
-
+### Install mqttFlight Server-RPI
 ```bash
 # On Raspberry Pi
 git clone https://github.com/brocasm/mqttFlight.git
-cd mqttFlight
-chmod +x ./server-rpi/setup-alpine.sh 
-./server-rpi/setup-alpine.sh  # Configures lightweight environment
+cd mqttFlight/server-rpi
+chmod +x ./server-rpi/setup.sh 
+./setup.sh  # Configures lightweight environment
 
 # For ESP32/ESP8266 modules
-COMING SOON 
+cd mqttFlight/modules
+./flash.sh
+./transfer.sh
 ```
 
 ## Contribute to the Project!  
