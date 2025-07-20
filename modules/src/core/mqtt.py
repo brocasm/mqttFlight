@@ -53,6 +53,8 @@ class MQTTHandler:
                 break
         
         client.disconnect()
+        if ret is None:
+            ret = default
         return ret   
         
     def log(self, level, message):
