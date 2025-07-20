@@ -120,6 +120,8 @@ progress "${ICON_CONF} Sauvegarde et configuration de Mosquitto..."
 if [ -f /etc/mosquitto/mosquitto.conf ]; then
     cp /etc/mosquitto/mosquitto.conf /etc/mosquitto/mosquitto.conf.bak
     log_info "Sauvegarde du fichier de configuration Mosquitto effectuée."
+    mkdir /var/lib/mosquitto/
+    log_info "Création du répertoire /var/lib/mosquitto."
 fi
 if [ -f configs/mosquitto.conf ]; then
     cat configs/mosquitto.conf > /etc/mosquitto/mosquitto.conf
@@ -150,6 +152,13 @@ chown mosquitto:mosquitto /etc/mosquitto/pwfile
 chmod 644 /etc/mosquitto/pwfile
 chown mosquitto:mosquitto /etc/mosquitto/acl.conf
 chmod 644 /etc/mosquitto/acl.conf
+mkdir -p /var/lib/mosquitto/
+chown -R mosquitto:mosquitto /var/lib/mosquitto/
+chmod -R 770 /var/lib/mosquitto/
+mkdir -p /var/log/mosquitto/
+chown -R mosquitto:mosquitto /var/log/mosquitto/
+chmod -R 770 /var/log/mosquitto/
+log_success "Permissions définies pour Mosquitto."
 
 # Rendre les scripts additionnels exécutables
 progress "${ICON_INSTALL} Mise en exécution des scripts additionnels..."
