@@ -8,6 +8,7 @@ from core.connection_wifi import WifiConnection
 from core.mqtt import MQTTHandler
 
 LOG_SCRIPT_NAME = "main.py"
+VERSION = "v0.1"
 
 module_id = generate_module_id()
 
@@ -45,6 +46,8 @@ async def main():
     mqtt_handler = CustomMQTTHandler()
     mqtt_handler.LOG_SCRIPT_NAME = LOG_SCRIPT_NAME
     await mqtt_handler.connect_mqtt()
+
+    mqtt_handler.client.publish(f"system/version/main/{module_id}", VERSION)
 
     topics = ['cockpit/default/altitude', f'cockpit/{module_id}/reboot']
     await mqtt_handler.subscribe(topics)

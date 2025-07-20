@@ -12,7 +12,7 @@ from include import log, generate_module_id, keep_ampy_alive
 from core.connection_wifi import WifiConnection
 from core.mqtt import MQTTHandler
 
-BOOT_VERSION = "v0.14"
+VERSION = "v0.15"
 LOG_SCRIPT_NAME = "boot.py"
 
 wifi = None
@@ -116,7 +116,7 @@ async def main():
     boot_counter = int(mqtt_handler.get_value_retained(f"system/countboot/{module_id}",0))
     boot_counter += 1
     mqtt_handler.client.publish(f"system/countboot/{module_id}", str(boot_counter), retain=True)
-    mqtt_handler.client.publish(f"system/version/boot/{module_id}", BOOT_VERSION)
+    mqtt_handler.client.publish(f"system/version/boot/{module_id}", VERSION)
 
     last_print_time = time.time()
 
