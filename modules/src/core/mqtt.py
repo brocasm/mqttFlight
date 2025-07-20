@@ -25,9 +25,9 @@ class MQTTHandler:
         print(f"Received message: {msg} on topic: {topic}")
         if config.DEV_MODE:
             global received_messages
-            received_messages += 1
+            received_messages = received_messages + 1
             print(f"Total messages received: {received_messages}")
-            self.client.publish("cockpit/{module_id}/received_messages",received_messages)
+            self.client.publish(f"cockpit/{module_id}/received_messages",str(received_messages))
               
 
         
