@@ -85,6 +85,8 @@ graph LR
 
 ## Getting Started  
 ### Install mqttFlight Server-RPI
+On a dedicated single board ARM with alpine linux, run this folowing commands:
+
 ```bash
 # On Raspberry Pi
 git clone https://github.com/brocasm/mqttFlight.git
