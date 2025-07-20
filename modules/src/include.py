@@ -29,6 +29,7 @@ def log(client=None, module_id=None , level="INFO", message="", filepath=None):
 def generate_module_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
     module_id = config.MODULE_PREFIX + mac.replace(":", "")[-6:]
+    print(f"** ** Module ID: {module_id} ** **")    
     return module_id
 
 
