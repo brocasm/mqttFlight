@@ -1,0 +1,14 @@
+/var/log/mosquitto/mosquitto.log {
+    daily
+    missingok
+    rotate 7
+    compress
+    delaycompress
+    notifempty
+    create 640 mosquitto adm
+    postrotate
+        if pidof mosquitto > /dev/null; then
+            kill -HUP $(pidof mosquitto)
+        fi
+    endscript
+}

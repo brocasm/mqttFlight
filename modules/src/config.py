@@ -1,5 +1,5 @@
 # Configuration Wi-Fi
-WIFI_SSID = "mqttFlight-rpi-f3:16"
+WIFI_SSID = "mqttFlight-rpi-54:8f"
 WIFI_PASSWORD = "mqttFlight-rpi"
 
 # Configuration MQTT
@@ -12,3 +12,7 @@ MODULE_PREFIX = "module-"
 
 
 SERVER_ADDRESS = "192.168.42.1"
+
+# Log level configuration
+LOG_LEVEL = "WARNING"  # Options: DEBUG, INFO, WARNING, ERROR
+DEV_MODE = True
