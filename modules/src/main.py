@@ -5,7 +5,7 @@ import config
 from include import generate_module_id
 import uasyncio as asyncio
 from core.connection_wifi import WifiConnection
-from core.mqtt import MQTTHandler  # Import MQTTHandler
+from core.mqtt import MQTTHandler
 
 LOG_SCRIPT_NAME = "main.py"
 
@@ -53,13 +53,11 @@ async def main():
 
     # Create a task for the MQTT loop
     mqtt_task = asyncio.create_task(mqtt_handler.mqtt_loop())
+    keep_ampy_alive_task = asyncio.create_task(keep_ampy_alive())
 
     while True:
         await asyncio.sleep(0.1)
-        current_time = time.time()
-        if current_time - last_print_time >= 5:
-            print("keep ampy alive")
-            last_print_time = current_time
+        pass
 
 if __name__ == "__main__":
     asyncio.run(main())

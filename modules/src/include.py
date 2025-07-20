@@ -2,6 +2,7 @@ import os
 import config 
 import ubinascii
 import network
+import time
 
 def log(client=None, module_id=None , level="INFO", message="", filepath=None):
     
@@ -28,3 +29,13 @@ def generate_module_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
     module_id = "modules-" + mac.replace(":", "")[-6:]
     return module_id
+
+
+async def keep_ampy_alive():
+    last_print_time = time.time()
+    while True:
+        await asyncio.sleep(0.1)
+        current_time = time.time()
+        if current_time - last_print_time >= 5:
+            print("keep ampy alive")
+            last_print_time = current_time

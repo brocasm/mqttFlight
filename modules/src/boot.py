@@ -8,72 +8,27 @@ import urequests
 import config
 import os
 from include import log, generate_module_id
+from core.connection_wifi import WifiConnection
+from core.mqtt import MQTTHandler
 
 BOOT_VERSION = "v0.14"
 LOG_SCRIPT_NAME = "boot.py"
+
+wifi = None
+
+module_id = generate_module_id()
 
 def get_mqtt_client_id():
     mac = ubinascii.hexlify(network.WLAN().config('mac'), ':').decode()
     return config.MODULE_PREFIX + mac.replace(":", "")[-6:]
 
 def connect_wifi():
-    sta_if = network.WLAN(network.STA_IF)
-    try:
-        if not sta_if.isconnected():
-            print('Connecting to Wi-Fi...')
-            sta_if.active(True)
-            sta_if.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
-            while not sta_if.isconnected():
-                time.sleep(0.5)
-                if sta_if.status() == network.STAT_CONNECTING:
-                    continue
-                elif sta_if.status() == network.STAT_WRONG_PASSWORD:
-                    raise Exception("Wi-Fi connection failed: Incorrect password")
-                elif sta_if.status() == network.STAT_NO_AP_FOUND:
-                    raise Exception("Wi-Fi connection failed: Access point not found")
-                elif sta_if.status() == network.STAT_CONNECT_FAIL:
-                    raise Exception("Wi-Fi connection failed: Connection failed")
-                elif sta_if.status() == network.STAT_IDLE:
-                    raise Exception("Wi-Fi connection failed: Interface is idle")
-                else:
-                    raise Exception("Wi-Fi connection failed: Unknown error")
-        print('Network config:', sta_if.ifconfig())
-    except Exception as e:
-        print(f"Error: {e}")
+    global wifi
+    wifi = WifiConnection()
+    await wifi.connect()
 
-def get_boot_counter(client, topic):
-    def on_message(topic, msg):
-        nonlocal counter
-        try:
-            counter = int(msg.decode())
-        except ValueError:
-            counter = 0
 
-    counter = 0
-    client.set_callback(on_message)
-    client.subscribe(topic)
 
-    start_time = time.time()
-    while time.time() - start_time < 5:
-        client.check_msg()
-        if counter != 0:
-            break
-
-    return counter
-
-def connect_mqtt(module_id):
-    client_id = get_mqtt_client_id()
-    client = MQTTClient(client_id, config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASSWORD)
-    client.connect()
-    log(level="INFO", message='Connected to MQTT Broker', filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
-
-    topic = "cockpit/" + module_id + "/countboot"
-    boot_counter = get_boot_counter(client, topic)
-    boot_counter += 1
-    client.publish(topic, str(boot_counter), retain=True)
-    client.publish("cockpit/" + module_id + "/version/boot", BOOT_VERSION)    
-
-    return client
 
 def calculate_file_hash(filepath):
     with open(filepath, 'rb') as f:
@@ -158,18 +113,42 @@ def check_fallback(client, topic):
 
     return fallback
 
-def main():
 
-    connect_wifi()
-    module_id = generate_module_id()
-    client = connect_mqtt(module_id)
+class CustomMQTTHandler(MQTTHandler):
+    def mqtt_callback(self, topic, msg):
+        super().mqtt_callback(topic, msg)
 
-    fallback_topic = f"cockpit/{module_id}/fallback"
-    if check_fallback(client, fallback_topic):
-        log(level="WARNING", message="Fallback triggered. Restoring main.py from backup...", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
-        restore_file('main.py')
-        client.publish(fallback_topic, 'done', retain=True)
-        log(level="WARNING", message="Fallback completed.", filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
+        topic = topic.decode('utf-8')
+        msg = msg.decode('utf-8')
+
+        if topic == f"system/countboot/{module_id}":
+            try:
+                boot_counter = int(msg.decode())
+            except ValueError:
+                boot_counter = 0            
+            boot_counter += 1
+            client.publish(f"system/countboot/{module_id}", str(boot_counter), retain=True)
+            client.publish(f"system/version/boot/{module_id}", BOOT_VERSION)  
+           
+
+# Main function
+async def main():
+    global mqtt_handler
+
+    await connect_wifi()
+
+    mqtt_handler = CustomMQTTHandler()
+    mqtt_handler.LOG_SCRIPT_NAME = LOG_SCRIPT_NAME
+    await mqtt_handler.connect_mqtt()    
+
+    topics = [f"system/countboot/{module_id}"]
+    await mqtt_handler.subscribe(topics)
+
+    last_print_time = time.time()
+
+    # Create a task for the MQTT loop
+    mqtt_task = asyncio.create_task(mqtt_handler.mqtt_loop())
+    keep_ampy_alive_task = asyncio.create_task(keep_ampy_alive())
 
     files_to_check = ['main.py', 'boot.py', 'config.py', 'include.py', 'core/connection_wifi.py', 'core/mqtt.py']
     request_reboot = False
@@ -196,5 +175,7 @@ def main():
     except Exception as e:
         log(level="ERROR", message=f'Failed to import main.py: {e}', filepath=LOG_SCRIPT_NAME, client=client, module_id=module_id)
 
+    
+
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
