@@ -5,7 +5,7 @@ import uasyncio as asyncio
 import config
 from include import log, generate_module_id
 
-received_messages = 0
+
 
 class MQTTHandler:
     def __init__(self):
@@ -13,6 +13,7 @@ class MQTTHandler:
         self.client = None
         self.led = machine.Pin(2, machine.Pin.OUT)  # Adjust the pin number as needed
         self.LOG_SCRIPT_NAME = "core-mqtt.py"
+        self.received_messages = 0
 
     async def blink_led(self):
         for _ in range(3):
@@ -23,11 +24,10 @@ class MQTTHandler:
 
     def mqtt_callback(self, topic, msg):
         print(f"Received message: {msg} on topic: {topic}")
-        if config.DEV_MODE:
-            global received_messages
-            received_messages = received_messages + 1
-            print(f"Total messages received: {received_messages}")
-            self.client.publish(f"cockpit/{module_id}/received_messages",str(received_messages))
+        if config.DEV_MODE:            
+            self.received_messages +=  1
+            print(f"Total messages received: {self.received_messages}")
+            self.client.publish(f"system/received_messages/{self.module_id}",str(self.received_messages))
               
 
         
