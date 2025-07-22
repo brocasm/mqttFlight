@@ -40,7 +40,7 @@ def perform_update():
     try:
         import update
         print("[boot] Vérification des mises à jour...")
-        asyncio.run(update.check_and_update_files())
+        await update.check_and_update_files()
     except Exception as e:
         print("[boot] Erreur dans update.py :", e)
 async def main():
