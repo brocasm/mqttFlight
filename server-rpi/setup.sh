@@ -120,8 +120,11 @@ progress "${ICON_CONF} Sauvegarde et configuration de Mosquitto..."
 if [ -f /etc/mosquitto/mosquitto.conf ]; then
     cp /etc/mosquitto/mosquitto.conf /etc/mosquitto/mosquitto.conf.bak
     log_info "Sauvegarde du fichier de configuration Mosquitto effectuée."
-    mkdir /var/lib/mosquitto/
+   
+fi
+if [ ! -d /var/lib/mosquitto]; then
     log_info "Création du répertoire /var/lib/mosquitto."
+    mkdir /var/lib/mosquitto/    
 fi
 if [ -f configs/mosquitto.conf ]; then
     cat configs/mosquitto.conf > /etc/mosquitto/mosquitto.conf
