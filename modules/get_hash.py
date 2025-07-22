@@ -1,6 +1,6 @@
 import os
 import hashlib
-from config import MQTT_BROKER, MQTT_PORT, MQTT_USER, MQTT_PASSWORD
+from src.config import MQTT_BROKER, MQTT_PORT, MQTT_USER, MQTT_PASSWORD
 import time
 import paho.mqtt.client as mqtt
 
