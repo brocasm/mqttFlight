@@ -21,7 +21,7 @@ ICON_TRANSFER="📤"
 TOTAL_STEPS=10
 step=1
 
-DIR_TO_TRANSFER = "/root/mqttFlight/modules/src"
+DIR_TO_TRANSFER="/root/mqttFlight/modules/src"
 
 # Fonctions de log
 log_info()   { echo -e "${ICON_INFO} ${BLUE}[INFO]${NC} $1"; }
@@ -36,7 +36,7 @@ source /root/venv/bin/activate
 log_success "Environnement virtuel activé."
 
 # Liste des fichiers à transférer (sans le chemin)
-files=$(ls "${DIR_TO_TRANSFER}")
+files=$(ls "$DIR_TO_TRANSFER")
 
 # Chemin source des fichiers
 source_path="/root/mqttFlight/modules/src"
