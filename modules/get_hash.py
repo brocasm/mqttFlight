@@ -22,12 +22,12 @@ def publish_sha256_of_files(directory):
         for file in files:
             file_path = os.path.join(root, file)
             file_hash = calculate_sha256(file_path)
-            topic = f"system/hash/{file_path.replace('./','')}"
+            topic = f"system/hash/{file_path.replace('./src','')}"
             client.publish(topic, file_hash, retain=True)
             print(f"Published hash for {file_path}: {file_hash}")
             time.sleep(1)
     client.disconnect()
 
 # Specify the directory you want to scan
-directory_to_scan = "."
+directory_to_scan = "./src"
 publish_sha256_of_files(directory_to_scan)
