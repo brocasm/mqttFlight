@@ -55,14 +55,14 @@ log_success "Paquets installés."
 
 # Récupération d'une partie de l'adresse MAC pour créer le SSID
 progress "${ICON_WIFI} Génération du SSID à partir de l'adresse MAC..."
-if [ -f /sys/class/net/wlan0/address ]; then
-    MAC_ADDRESS=$(cat /sys/class/net/wlan0/address)
+if [ -f /sys/class/net/wlan1/address ]; then
+    MAC_ADDRESS=$(cat /sys/class/net/wlan1/address)
     CLEAN_MAC=$(echo "$MAC_ADDRESS" | tr -d ':') 
     SSID_SUFFIX=${CLEAN_MAC: -4} 
     SSID="${SSID_PREFIX}-${SSID_SUFFIX}"
     log_success "SSID généré : ${SSID}"
 else
-    log_error "L'interface wlan0 n'est pas disponible ou ne fournit pas d'adresse MAC."
+    log_error "L'interface wlan1 n'est pas disponible ou ne fournit pas d'adresse MAC."
     exit 1
 fi
 
