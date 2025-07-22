@@ -58,7 +58,7 @@ progress "${ICON_WIFI} Génération du SSID à partir de l'adresse MAC..."
 if [ -f /sys/class/net/wlan0/address ]; then
     MAC_ADDRESS=$(cat /sys/class/net/wlan0/address)
     CLEAN_MAC=$(echo "$MAC_ADDRESS" | tr -d ':') 
-    SSID_SUFFIX=${MAC_ADDRESS: -4} 
+    SSID_SUFFIX=${CLEAN_MAC: -4} 
     SSID="${SSID_PREFIX}-${SSID_SUFFIX}"
     log_success "SSID généré : ${SSID}"
 else
