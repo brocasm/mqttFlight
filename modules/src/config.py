@@ -16,3 +16,6 @@ SERVER_ADDRESS = "192.168.42.1"
 # Log level configuration
 LOG_LEVEL = "WARNING"  # Options: DEBUG, INFO, WARNING, ERROR
 DEV_MODE = True
+
+
+WATCH_FILES_TO_UPDATE = ['main.py', 'boot.py', 'config.py', 'include.py', 'core/connection_wifi.py', 'core/mqtt.py']
