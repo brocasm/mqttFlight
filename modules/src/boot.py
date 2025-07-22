@@ -5,6 +5,8 @@ import machine
 import os
 import uasyncio as asyncio
 
+from include import keep_ampy_alive
+
 from core.connection_wifi import WifiConnection
 
 CONFIG_FILE = 'config.json'
@@ -41,8 +43,9 @@ def perform_update():
         asyncio.run(update.check_and_update_files())
     except Exception as e:
         print("[boot] Erreur dans update.py :", e)
-def main():
+async def main():
     print("[boot] --- Démarrage du module ---")
+    keep_ampy_alive_task = asyncio.create_task(keep_ampy_alive())
     connect_wifi()
 
     perform_update()
@@ -62,4 +65,6 @@ def main():
     print("[boot] Échec de main_backup.py → passage en mode fallback")
     run_script("fallback.py")
 
-main()
+
+if __name__ == "__main__":
+    asyncio.run(main())
