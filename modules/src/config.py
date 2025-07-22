@@ -1,5 +1,5 @@
 # Configuration Wi-Fi
-WIFI_SSID = "mqttFlight-rpi-54:8f"
+WIFI_SSID = "mqttFlight-rpi-f316"
 WIFI_PASSWORD = "mqttFlight-rpi"
 
 # Configuration MQTT
