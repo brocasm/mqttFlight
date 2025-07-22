@@ -72,7 +72,7 @@ def restore_file(filepath):
     with open(filepath, 'wb') as f:
         f.write(content)
 
-async def check_and_update_files():
+async def main():
     global mqtt_handler
 
     await connect_wifi()
@@ -110,4 +110,4 @@ async def check_and_update_files():
   
 
 if __name__ == "__main__":
-    asyncio.run(check_and_update_files())
+    asyncio.run(main())
